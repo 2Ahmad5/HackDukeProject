@@ -1,6 +1,7 @@
 // Function to extract URLs from Google search results
-
 const currentUrl = window.location.href;
+
+
 
 // Send the URL to the background script
 chrome.runtime.sendMessage({ url: currentUrl });
@@ -9,6 +10,13 @@ console.log("Current page URL sent:", currentUrl);
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "highlight") {
         highlightText(message.text);
+    } else if (message.action === "summarize") {
+        text = extractPageText();
+        (async () => {
+            await summarizeText(text, sendResponse);
+        })();
+
+        return true;
     }
 });
 
@@ -35,6 +43,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 //     // }
     
 // }
+
+async function summarizeText(text, sendResponse){
+    try {
+        let response = await fetch('http://127.0.0.1:5000/check_reliability', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: text })
+        });
+        if(!response.ok){
+            throw new Error(`HTTP Error! Status: ${response.status}`);
+        }
+        let data = await response.json();
+        console.log("Reliability Check Result:", data);
+
+        sendResponse({ summary: data.result })
+
+    } catch (error) {
+        console.error("Error:", error);
+        sendResponse({ summary: "Error fetching summary." });
+    }
+
+}
 
 function highlightText(targetText) {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);

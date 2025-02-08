@@ -40,12 +40,32 @@ chrome.runtime.sendMessage({ action: "getUrl" }, response => {
 document.getElementById("highlightButton").addEventListener("click", () => {
     let userText = document.getElementById("highlightInput").value.trim();
     
+
+
     if (userText) {
        
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             chrome.tabs.sendMessage(tabs[0].id, { action: "highlight", text: userText });
         });
     }
+});
+
+document.getElementById("summarizeArticle").addEventListener("click", () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "summarize" }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error("Error:", chrome.runtime.lastError);
+                document.getElementById("summary").textContent = chrome.runtime.lastError;
+                return;
+            }
+
+            if (response && response.summary) {
+                document.getElementById("summary").textContent = response.summary;
+            } else {
+                document.getElementById("summary").textContent = "No summary found.";
+            }
+        });
+    });
 });
 
 document.getElementById("extractTextButton").addEventListener("click", () => {

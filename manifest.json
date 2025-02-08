@@ -6,17 +6,17 @@
     "permissions": ["activeTab", "scripting"],
     "host_permissions": ["https://www.google.com/*"],
     "background": {
-      "service_worker": "background.js"
+      "service_worker": "backend/background.js"
     },
     "content_scripts": [
       {
         "matches": ["<all_urls>"],
-        "js": ["content.js"],
+        "js": ["backend/content.js"],
         "run_at": "document_idle"
       }
     ],
     "action": {
-      "default_popup": "popup.html",
+      "default_popup": "frontend/popup.html",
       "default_icon": {
         "16": "icons/icon16.jpg",
         "48": "icons/icon48.jpg",
