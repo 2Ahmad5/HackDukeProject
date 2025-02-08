@@ -2,10 +2,8 @@ from flask import Flask, request, jsonify
 import requests
 import os
 from dotenv import load_dotenv
-from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,7 +27,8 @@ def check_article_reliability(context):
         "messages": [
             {"role": "system", "content": "You are a helpful assistant designed to fact check an article in a provided link. In your response, give a media bias/fact check reliability score of the page and a brief summary of the reliability. Be sure to cite 3 outside sources if possible and quote particular statements in the article that are misleading or untrue. Do not reword quotations from the article, cite it word for word."},
             {"role": "user", "content": f"How reliable is this article? {context}"}
-        ]
+        ],
+        "return_citations": True
     }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -39,8 +38,13 @@ def check_article_reliability(context):
     
     try:
         response_json = response.json()
-        print(response_json['choices'][0]['message']['content'])
-        return response_json['choices'][0]['message']['content']
+        content = response_json['choices'][0]['message']['content']
+        citations = response_json.get('citations', [])
+        
+        print("Content:", content)
+        print("Citations:", citations)
+        
+        return {"content": content, "citations": citations}  # Return both content and citations
     except requests.exceptions.JSONDecodeError:
         return {"error": "Invalid JSON response"}
 
