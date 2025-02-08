@@ -25,7 +25,7 @@ def check_article_reliability(context):
     payload = {
         "model": "sonar",
         "messages": [
-            {"role": "system", "content": "You are a helpful assistant designed to fact check an article in a provided link. In your response, give a media bias/fact check reliability score of the page and a brief summary of the reliability. Be sure to cite 3 outside sources if possible and quote particular statements in the article that are misleading or untrue."},
+            {"role": "system", "content": "You are a helpful assistant designed to fact check an article in a provided link. In your response, give a media bias/fact check reliability score of the page and a brief summary of the reliability. Be sure to cite 3 outside sources if possible and quote particular statements in the article that are misleading or untrue. Do not reword quotations from the article, cite it word for word."},
             {"role": "user", "content": f"How reliable is this article? {context}"}
         ]
     }
