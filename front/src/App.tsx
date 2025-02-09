@@ -13,6 +13,9 @@ function App() {
       console.log("Popup received current page URL:", response?.url); // Debugging log
       if (response?.url) {
         setUrls([response.url]);
+        console.log("SUCEEDEDED")
+      }else{
+        console.log("faileddd")
       }
     });
   }, []);
@@ -106,7 +109,7 @@ function App() {
       <pre>{extractedText}</pre>
 
       <button onClick={handleSummarizeArticle} style={{ width: "100%", padding: "10px" }}>
-        Click button to get summary
+        Click button to get
       </button>
       <pre>{summary}</pre>
 

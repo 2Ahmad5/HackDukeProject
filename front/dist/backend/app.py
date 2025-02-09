@@ -3,6 +3,8 @@ import requests
 import os
 from dotenv import load_dotenv
 from flask_cors import CORS
+from youtube_transcript import YouTubeTranscriptFetcher
+
 
 app = Flask(__name__)
 CORS(app)
@@ -27,8 +29,8 @@ def check_article_reliability(context):
     payload = {
         "model": "sonar",
         "messages": [
-            {"role": "system", "content": "You are a helpful assistant designed to fact check an article in a provided link. In your response, give a media bias/fact check reliability score of the page and a brief summary of the reliability. Be sure to cite 3 outside sources if possible and quote particular statements in the article that are misleading or untrue. Do not reword quotations from the article, cite it word for word."},
-            {"role": "user", "content": f"How reliable is this article? {context}"}
+            {"role": "system", "content": "You are a helpful assistant designed to answer questions about a provided reading, along with providing output in a rigorous format so that it can be passed into a front-end. Follow these instructions exactly, without any additional text whatsover: First, give a 1 paragraph summary, followed by a newline. Second, quote statements from the article verbatim that may be false or misleading. After each quote, explain why you chose to include that quote, and always cite evidence to support your explanation. Seperate all of these with new lines. If there are no misleading quotes in the entire article, only print N/A after the summary and nothing else."},
+            {"role": "user", "content": f"{context}"}
         ]
     }
 
@@ -53,6 +55,18 @@ def process_article():
     article_url = data['url']
     result = check_article_reliability(article_url)
     return jsonify({"result": result})
+
+@app.route('/get_youtube', methods=['POST'])
+def process_youtube():
+    data = request.json
+
+    if 'video_id' not in data:
+        return jsonify({"error": "Missing 'video_id' field"}), 400
+
+    video_id = data['video_id']
+    result = YouTubeTranscriptFetcher(video_id)
+    print(result.get_transcript())
+    return jsonify({"result": result.get_transcript()})
 
 if __name__ == '__main__':
     app.run(debug=True)

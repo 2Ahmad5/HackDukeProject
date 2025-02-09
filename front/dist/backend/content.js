@@ -17,30 +17,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })();
 
         return true;
+    }else if (message.action === "youtube_summary"){
+        let text = extractVideoId(currentUrl);
+        
+        if (text) {
+            (async () => {
+                await getYoutube(text, sendResponse);
+            })();
+            return true;
+        } else {
+            console.error("Invalid YouTube URL");
+        }
     }
 });
 
+function extractVideoId(url) {
+    const regex = /(?:v=|\/)([0-9A-Za-z_-]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+}
+
 // function highlightText(targetText) {
-//     // const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+//     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
     
-//     // while (walker.nextNode()) {
-//     //     let node = walker.currentNode;
-//     //     if (node.nodeValue.includes(targetText)) {
-//     //         const span = document.createElement("span");
-//     //         span.style.backgroundColor = "yellow";
-//     //         span.style.fontWeight = "bold";
-//     //         span.textContent = targetText;
+//     while (walker.nextNode()) {
+//         let node = walker.currentNode;
+//         if (node.nodeValue.includes(targetText)) {
+//             const span = document.createElement("span");
+//             span.style.backgroundColor = "yellow";
+//             span.style.fontWeight = "bold";
+//             span.textContent = targetText;
 
-//     //         const newText = node.nodeValue.split(targetText);
-//     //         const parent = node.parentNode;
+//             const newText = node.nodeValue.split(targetText);
+//             const parent = node.parentNode;
 
-//     //         if (parent) {
-//     //             parent.replaceChild(document.createTextNode(newText[0]), node);
-//     //             parent.insertBefore(span, node.nextSibling);
-//     //             parent.insertBefore(document.createTextNode(newText[1]), span.nextSibling);
-//     //         }
-//     //     }
-//     // }
+//             if (parent) {
+//                 parent.replaceChild(document.createTextNode(newText[0]), node);
+//                 parent.insertBefore(span, node.nextSibling);
+//                 parent.insertBefore(document.createTextNode(newText[1]), span.nextSibling);
+//             }
+//         }
+//     }
     
 // }
 
@@ -64,9 +81,32 @@ async function summarizeText(text, sendResponse){
     } catch (error) {
         console.error("Error:", error);
         sendResponse({ summary: "Error fetching summary." });
-    }
 
+    }
 }
+
+async function getYoutube(url, sendResponse) {
+    try{
+        let response = await fetch('http://127.0.0.1:5000/get_youtube', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ video_id: url })
+        });
+        if(!response.ok){
+            throw new Error(`HTTP Error! Status: ${response.status}`);
+        }
+        let data = await response.json();
+        console.log("Youtube Summary:", data);
+        sendResponse({ summary: data.result })
+
+    } catch (error){
+        console.error("Error:", error);
+        sendResponse({ summary: "Error fetching YouTube summary." });
+    }
+}
+
 
 function highlightText(targetText) {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
