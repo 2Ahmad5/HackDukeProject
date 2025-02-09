@@ -12,6 +12,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         highlightText(message.text);
     } else if (message.action === "summarize") {
         text = extractPageText();
+        console.log("text:", text);
         (async () => {
             await summarizeText(text, sendResponse);
         })();
@@ -157,16 +158,20 @@ function highlightText(targetText, explanation) {
             let tooltip = document.createElement("div");
             tooltip.textContent = explanation;
             tooltip.style.position = "absolute";
-            tooltip.style.left = "100%"; // Position to the right of the highlight
+            tooltip.style.left = "105%"; // Slightly offset to the right of the element
             tooltip.style.top = "50%";
-            tooltip.style.transform = "translateY(-50%)"; // Center it vertically
-            tooltip.style.backgroundColor = "black";
-            tooltip.style.color = "white";
-            tooltip.style.padding = "5px";
-            tooltip.style.borderRadius = "5px";
+            tooltip.style.transform = "translateY(-50%)";
+            tooltip.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+            tooltip.style.color = "#fff";
+            tooltip.style.padding = "8px";
+            tooltip.style.borderRadius = "4px";
             tooltip.style.fontSize = "12px";
-            tooltip.style.whiteSpace = "nowrap";
-            tooltip.style.display = "none"; // Initially hidden
+            tooltip.style.whiteSpace = "normal";      // Allow wrapping of text
+            tooltip.style.maxWidth = "250px";           // Limit tooltip width
+            tooltip.style.overflowWrap = "break-word";   // Break long words if needed
+            tooltip.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.2)";
+            tooltip.style.zIndex = "1000";               // Ensure it appears above other elements
+            tooltip.style.display = "none"; 
 
             // Show tooltip on hover
             span.addEventListener("mouseenter", () => { tooltip.style.display = "block"; });

@@ -75,13 +75,13 @@ def check_video_reliability(context):
         print(response_json)
         content = response_json["choices"][0]["message"]["content"]
         citations = response_json.get('citations', [])
-        # print("Raw content:", content)
+        print("Raw content:", content)
 
         cleaned = content.replace("```json", "").replace("```", "").strip()
 
         data = json.loads(cleaned)
 
-        # print(data)
+        print(data)
 
         # Extract fields
         classification = data.get("classification", "")

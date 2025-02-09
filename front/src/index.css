@@ -1,160 +1,137 @@
-/* :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Overall container styling */
+.extension-container {
+  width: 450px;
+  padding: 25px;
+  font-family: Arial, sans-serif;
+  background: #f0f4f8;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 10px;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
+/* Header styles */
+.header {
   display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  align-items: center;
+  margin-bottom: 20px;
 }
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.logo {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
 }
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-} */
-
-body {
-  font-family: "Arial", sans-serif;
-  background-color: #1a1a1a;
-  color: #e0e0e0;
+.product-info .product-name {
   margin: 0;
-  padding: 0;
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #2c3e50;
+}
+.product-description {
+  margin: 5px 0 0 0;
+  font-size: 0.95em;
+  color: #7f8c8d;
 }
 
-.container {
-  width: 300px;
+/* Home tab layout */
+.home-tab .input-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.text-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1em;
+}
+.submit-button {
+  padding: 10px 14px;
+  background-color: #3498db;
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+}
+.submit-button:hover {
+  background-color: #2980b9;
+}
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+.action-button {
+  flex: 1;
+  padding: 12px;
+  background-color: #3498db;
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+.action-button:hover {
+  background-color: #2980b9;
+}
+
+/* Result tab layout */
+.result-tab {
+  background: #fff;
   padding: 20px;
-  box-sizing: border-box;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
-
-h2 {
-  color: #00ffff;
-  margin-top: 0vh;
-}
-
-.url-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-.url-list li {
-  margin-bottom: 8px;
-}
-
-.url-list a {
-  color: #00cccc;
-  text-decoration: none;
-}
-
-.url-list a:hover {
-  text-decoration: underline;
-}
-
-.input {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  background-color: #2a2a2a;
-  border: 1px solid #00ffff;
-  color: #e0e0e0;
-  border-radius: 4px;
-}
-
-.button {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  background-color: #00cccc;
-  color: #1a1a1a;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.button:hover {
-  background-color: #00ffff;
-}
-
-.extracted-text,
-.summary-text {
-  background-color: #2a2a2a;
-  padding: 10px;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.summary-tab {
-  /* position: relative; */
-}
-
 .back-button {
-  position: absolute;
-  top: 0;
-  left: 0;
-  background-color: transparent;
-  color: #00ffff;
+  background: none;
   border: none;
+  color: #3498db;
+  font-size: 1em;
   cursor: pointer;
-  padding: 5px;
-  font-size: 14px;
+  margin-bottom: 10px;
+  font-weight: bold;
 }
-
 .back-button:hover {
   text-decoration: underline;
+}
+.result-content {
+  margin-top: 10px;
+}
+.result-section {
+  margin-bottom: 20px;
+}
+.result-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #2c3e50;
+}
+.result-section p,
+.result-section li {
+  margin: 0;
+  font-size: 0.95em;
+}
+
+/* Citation cards styling */
+.citation-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.citation-card {
+  background: #ecf0f1;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9em;
+  color: #2c3e50;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+.citation-card:hover {
+  transform: translateY(-2px);
 }
