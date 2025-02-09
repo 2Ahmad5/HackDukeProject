@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Search URL Extractor",
+  "version": "1.0",
+  "description": "Extracts URLs from Google search results.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["https://www.google.com/*"],
+  "background": {
+    "service_worker": "backend/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["backend/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      
+    }
+  }
+}

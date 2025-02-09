@@ -1,9 +1,6 @@
-from flask import Flask, request, jsonify
 import requests
 import os
 from dotenv import load_dotenv
-
-app = Flask(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -48,15 +45,6 @@ def check_article_reliability(context):
     except requests.exceptions.JSONDecodeError:
         return {"error": "Invalid JSON response"}
 
-@app.route('/check_reliability', methods=['POST'])
-def process_article():
-    data = request.json
-    if 'url' not in data:
-        return jsonify({"error": "Missing 'url' field"}), 400
-
-    article_url = data['url']
-    result = check_article_reliability(article_url)
-    return jsonify({"result": result})
-
-if __name__ == '__main__':
-    app.run(debug=True)
+# Example usage
+context = "The moon is made of cheese."
+result = check_article_reliability(context)
