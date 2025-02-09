@@ -32,8 +32,7 @@ function App() {
     chrome.storage.local.get(["selectedText"], (result) => {
       if (result.selectedText) {
         setSelectedText(result.selectedText);
-        setHighlightText(result.selectedText); // Use selectedText as input
-        // Clear the storage after retrieving
+        setHighlightText(result.selectedText);
         chrome.storage.local.remove("selectedText");
       }
     });
@@ -41,16 +40,15 @@ function App() {
     chrome.storage.onChanged.addListener((changes) => {
       if (changes.selectedText) {
         setSelectedText(changes.selectedText.newValue);
-        setHighlightText(changes.selectedText.newValue); // Use selectedText as input
-
+        setHighlightText(changes.selectedText.newValue);
+      }});
     chrome.runtime.sendMessage({ action: "getUrl" }, (response: { url?: string }) => {
-      console.log("Popup received current page URL:", response?.url); // Debugging log
+      console.log("Popup received current page URL:", response?.url);
       if (response?.url) {
         setUrls([response.url]);
         console.log("SUCEEDEDED")
       }else{
         console.log("faileddd")
-
       }
     });
   }, []);
@@ -92,9 +90,6 @@ function App() {
 
   // Handle article summarization
   const handleSummarizeArticle = () => {
-
-   
-
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
       if (tabs[0].id) {
         chrome.tabs.sendMessage(tabs[0].id, { action: "summarize" }, (response: { summary?: string, citations?: string[] }) => {
@@ -105,15 +100,12 @@ function App() {
             const citationsFormatted = response?.citations?.length
               ? "\n\nCitations:\n" + response.citations.map((c) => `🔗 ${c}`).join("\n")
               : "\n\n(No citations available)";
-            
             setSummary((response?.summary || "No summary found.") + citationsFormatted);
           }
         });
-
-      }
+      }}
     );
   };
-  
 
   // Handle YouTube video summarization
   const handleSummarizeVideo = () => {
