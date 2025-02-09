@@ -14,7 +14,6 @@ function App() {
 
   // Fetch URLs from content script
   useEffect(() => {
-
     if (chrome.runtime) {
       chrome.runtime.sendMessage(
         { action: "getUrl" },
@@ -29,34 +28,43 @@ function App() {
   }, []);
 
   useEffect(() => {
-    chrome.storage.local.get(["selectedText"], (result) => {
-      if (result.selectedText) {
-        setSelectedText(result.selectedText);
-        setHighlightText(result.selectedText); // Use selectedText as input
-        // Clear the storage after retrieving
-        chrome.storage.local.remove("selectedText");
-      }
-    });
+    if (chrome.storage) {
+      chrome.storage.local.get(["selectedText"], (result) => {
+        if (result.selectedText) {
+          setSelectedText(result.selectedText);
+          setHighlightText(result.selectedText); // Use selectedText as input
+          // Clear the storage after retrieving
+          chrome.storage.local.remove("selectedText");
+        }
+      });
 
-    chrome.storage.onChanged.addListener((changes) => {
-      if (changes.selectedText) {
-        setSelectedText(changes.selectedText.newValue);
-        setHighlightText(changes.selectedText.newValue); // Use selectedText as input
-
-    chrome.runtime.sendMessage({ action: "getUrl" }, (response: { url?: string }) => {
-      console.log("Popup received current page URL:", response?.url); // Debugging log
-      if (response?.url) {
-        setUrls([response.url]);
-        console.log("SUCEEDEDED")
-      }else{
-        console.log("faileddd")
-
-      }
-    });
+      chrome.storage.onChanged.addListener((changes) => {
+        if (changes.selectedText) {
+          setSelectedText(changes.selectedText.newValue);
+          setHighlightText(changes.selectedText.newValue); // Use selectedText as input
+        }
+      });
+    }
   }, []);
+
+  const saveCurrentUrlToHistory = () => {
+    chrome.tabs.query(
+      { active: true, currentWindow: true },
+      (tabs: chrome.tabs.Tab[]) => {
+        if (tabs[0].url) {
+          chrome.storage.local.get({ history: [] }, (result) => {
+            const history = result.history;
+            history.push(tabs[0].url);
+            chrome.storage.local.set({ history });
+          });
+        }
+      }
+    );
+  };
 
   // Handle highlight text
   const handleHighlight = () => {
+    saveCurrentUrlToHistory();
     if (highlightText.trim()) {
       chrome.tabs.query(
         { active: true, currentWindow: true },
@@ -74,6 +82,7 @@ function App() {
 
   // Handle text extraction
   const handleExtractText = () => {
+    saveCurrentUrlToHistory();
     chrome.tabs.query(
       { active: true, currentWindow: true },
       (tabs: chrome.tabs.Tab[]) => {
@@ -92,31 +101,31 @@ function App() {
 
   // Handle article summarization
   const handleSummarizeArticle = () => {
-
-   
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
-      if (tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "summarize" }, (response: { summary?: string, citations?: string[] }) => {
-          if (chrome.runtime.lastError) {
-            console.error("Error:", chrome.runtime.lastError);
-            setSummary("Error fetching summary.");
-          } else {
-            const citationsFormatted = response?.citations?.length
-              ? "\n\nCitations:\n" + response.citations.map((c) => `🔗 ${c}`).join("\n")
-              : "\n\n(No citations available)";
-            
-            setSummary((response?.summary || "No summary found.") + citationsFormatted);
-          }
-        });
-
+    saveCurrentUrlToHistory();
+    chrome.tabs.query(
+      { active: true, currentWindow: true },
+      (tabs: chrome.tabs.Tab[]) => {
+        if (tabs[0].id) {
+          chrome.tabs.sendMessage(
+            tabs[0].id,
+            { action: "summarize" },
+            (response: { summary?: string }) => {
+              if (chrome.runtime.lastError) {
+                console.error("Error:", chrome.runtime.lastError);
+                setSummary("Error fetching summary.");
+              } else {
+                setSummary(response?.summary || "No summary found.");
+              }
+            }
+          );
+        }
       }
     );
   };
-  
 
   // Handle YouTube video summarization
   const handleSummarizeVideo = () => {
+    saveCurrentUrlToHistory();
     chrome.tabs.query(
       { active: true, currentWindow: true },
       (tabs: chrome.tabs.Tab[]) => {
@@ -186,12 +195,13 @@ function App() {
         </button>
         <pre>{extractedText}</pre>
 
-
-      <button onClick={handleSummarizeArticle} style={{ width: "100%", padding: "10px" }}>
-        Click button to get
-      </button>
-      <pre>{summary}</pre>
-
+        <button
+          onClick={handleSummarizeArticle}
+          style={{ width: "100%", padding: "10px" }}
+        >
+          Click button to get summary
+        </button>
+        <pre>{summary}</pre>
 
         <button
           onClick={handleSummarizeVideo}

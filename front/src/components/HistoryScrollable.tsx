@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import HistorySingle from "./HistorySingle";
 import "./HistoryScrollable.css";
 
@@ -10,33 +10,21 @@ interface HistoryItem {
 }
 
 const HistoryScrollable: React.FC = () => {
-  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([
-    // Example items
-    {
-      id: 1,
-      title: "Example Site 1",
-      date: "2025-02-08",
-      link: "https://example.com/1",
-    },
-    {
-      id: 2,
-      title: "Example Site 2",
-      date: "2025-02-07",
-      link: "https://example.com/2",
-    },
-    {
-      id: 3,
-      title: "Example Site 3",
-      date: "2025-02-07",
-      link: "https://example.com/2",
-    },
-    {
-      id: 4,
-      title: "Example Site 4",
-      date: "2025-02-07",
-      link: "https://example.com/2",
-    },
-  ]);
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+
+  useEffect(() => {
+    if (chrome.storage) {
+      chrome.storage.local.get({ history: [] }, (result) => {
+        const history = result.history.map((url: string, index: number) => ({
+          id: index,
+          title: url,
+          date: new Date().toISOString().split("T")[0],
+          link: url,
+        }));
+        setHistoryItems(history);
+      });
+    }
+  }, []);
 
   const handleDelete = (id: number) => {
     setHistoryItems(historyItems.filter((item) => item.id !== id));
@@ -44,15 +32,19 @@ const HistoryScrollable: React.FC = () => {
 
   return (
     <div className="history-scrollable">
-      {historyItems.map((item) => (
-        <HistorySingle
-          key={item.id}
-          title={item.title}
-          date={item.date}
-          link={item.link}
-          onDelete={() => handleDelete(item.id)}
-        />
-      ))}
+      {historyItems.length === 0 ? (
+        <p>No history items found.</p>
+      ) : (
+        historyItems.map((item) => (
+          <HistorySingle
+            key={item.id}
+            title={item.title}
+            date={item.date}
+            link={item.link}
+            onDelete={() => handleDelete(item.id)}
+          />
+        ))
+      )}
     </div>
   );
 };
