@@ -1,198 +1,330 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
+import logo from './logo.png';
 
 function App() {
-  const [urls, setUrls] = useState<string[]>([]);
-  const [, setSelectedText] = useState("");
-  const [highlightText, setHighlightText] = useState("");
-  const [extractedText, setExtractedText] = useState(
-    "Click the button to extract text."
-  );
-  const [summary, setSummary] = useState("Click button to get page summary");
-  const [ytSummary, setYtSummary] = useState(
-    "Click button to get video summary"
-  );
 
-  // Fetch URLs from content script
-  useEffect(() => {
+  // const [urls, setUrls] = useState<string[]>([]);
+  // const [highlightText, setHighlightText] = useState("");
+  // const [extractedText, setExtractedText] = useState("Click the button to extract text.");
+  // const [summary, setSummary] = useState("Click button to get page summary");
+  // const [ytSummary, setYtSummary] = useState("Click button to get video summary");
+  const [activeTab, setActiveTab] = useState("home")
+  const [inputText, setInputText] = useState("");
+  const [inputData, setInputData] = useState({
+    summary: "",
+    citations: [],
+  });
+  const [articleData, setArticleData] = useState({
+    classification: "",
+    summary: "",
+    citations: [],
+    misleadingQuotes: {} as Record<string, string>,
+  });
+  const [videoData, setVideoData] = useState({
+    classification: "",
+    summary: "",
+    citations: [],
+    misleadingQuotes: {} as Record<string, string>,
+  });
+  // const [outputText, setOutputText] = useState("");
 
-    if (chrome.runtime) {
-      chrome.runtime.sendMessage(
-        { action: "getUrl" },
-        (response: { url?: string }) => {
-          console.log("Popup received current page URL:", response?.url); // Debugging log
-          if (response?.url) {
-            setUrls([response.url]);
-          }
-        }
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    chrome.storage.local.get(["selectedText"], (result) => {
-      if (result.selectedText) {
-        setSelectedText(result.selectedText);
-        setHighlightText(result.selectedText);
-        chrome.storage.local.remove("selectedText");
-      }
-    });
-
-    chrome.storage.onChanged.addListener((changes) => {
-      if (changes.selectedText) {
-        setSelectedText(changes.selectedText.newValue);
-        setHighlightText(changes.selectedText.newValue);
-      }});
-    chrome.runtime.sendMessage({ action: "getUrl" }, (response: { url?: string }) => {
-      console.log("Popup received current page URL:", response?.url);
-      if (response?.url) {
-        setUrls([response.url]);
-        console.log("SUCEEDEDED")
-      }else{
-        console.log("faileddd")
-      }
-    });
-  }, []);
-
-  // Handle highlight text
-  const handleHighlight = () => {
-    if (highlightText.trim()) {
-      chrome.tabs.query(
-        { active: true, currentWindow: true },
-        (tabs: chrome.tabs.Tab[]) => {
-          if (tabs[0].id) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              action: "highlight",
-              text: highlightText,
-            });
-          }
-        }
-      );
-    }
-  };
-
-  // Handle text extraction
-  const handleExtractText = () => {
-    chrome.tabs.query(
-      { active: true, currentWindow: true },
-      (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].id) {
-          chrome.tabs.sendMessage(
-            tabs[0].id,
-            { action: "extractText" },
-            (response: { text?: string }) => {
-              setExtractedText(response?.text || "No text found.");
+  const handleSubmitInput = () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      console.log("TEXKJNFKBF:", inputText)
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(
+          tabs[0].id,
+          
+          { action: "input_text", text: inputText },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              console.error("Error:", chrome.runtime.lastError);
+              // Optionally, you can display an error message
+              setInputData({
+                summary: "Error fetching summary.",
+                citations: [],
+              });
+            } else {
+              // Assume that the response returns an object with
+              // a summary and citations property
+              setInputData({
+                summary: response?.summary || "No summary found.",
+                citations: response?.citations || [],
+              });
             }
-          );
-        }
-      }
-    );
-  };
-
-  // Handle article summarization
-  const handleSummarizeArticle = () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
-      if (tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "summarize" }, (response: { summary?: string, citations?: string[] }) => {
-          if (chrome.runtime.lastError) {
-            console.error("Error:", chrome.runtime.lastError);
-            setSummary("Error fetching summary.");
-          } else {
-            const citationsFormatted = response?.citations?.length
-              ? "\n\nCitations:\n" + response.citations.map((c) => `🔗 ${c}`).join("\n")
-              : "\n\n(No citations available)";
-            setSummary((response?.summary || "No summary found.") + citationsFormatted);
+            // Open the new tab to display the results
+            setActiveTab("input");
           }
-        });
-      }}
-    );
+        )
+      }
+    });
   };
 
-  // Handle YouTube video summarization
-  const handleSummarizeVideo = () => {
-    chrome.tabs.query(
-      { active: true, currentWindow: true },
-      (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].id) {
+
+    const handleSummarizeArticle = () => {
+      setActiveTab("article");
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) {
           chrome.tabs.sendMessage(
             tabs[0].id,
-            { action: "youtube_summary" },
-            (response: { summary?: string }) => {
+            { action: "summarize" },
+            (response) => {
+              console.log("respoesinesofns", response)
               if (chrome.runtime.lastError) {
                 console.error("Error:", chrome.runtime.lastError);
-                setYtSummary("Error fetching video summary.");
+                setArticleData({
+                  classification: "Error",
+                  summary: "Error fetching summary.",
+                  citations: [],
+                  misleadingQuotes: {},
+                });
               } else {
-                setYtSummary(response?.summary || "No summary found.");
+                
+                setArticleData({
+                  classification: response?.classification || "Unknown",
+                  summary: response?.summary || "No summary found.",
+                  citations: response?.citations || [],
+                  misleadingQuotes: response?.misleading_quotes || {},
+                });
               }
             }
           );
         }
+      });
+    };
+
+
+
+  const handleSummarizeVideo = () => {
+    setActiveTab("video");
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(
+          tabs[0].id,
+          { action: "youtube_summary" },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              console.error("Error:", chrome.runtime.lastError);
+              setVideoData({
+                classification: "Error",
+                summary: "Error fetching video summary.",
+                citations: [],
+                misleadingQuotes: {},
+              });
+            } else {
+              setVideoData({
+                classification: response?.classification || "Unknown",
+                summary: response?.summary || "No summary found.",
+                citations: response?.citations || [],
+                misleadingQuotes: response?.misleading_quotes || {},
+              });
+            }
+          }
+        );
+
       }
     );
   };
 
+
   return (
-    <div>
-      <h1>Test Element</h1>
-      <div
-        style={{
-          fontFamily: "Arial, sans-serif",
-          padding: "10px",
-          width: "300px",
-        }}
-      >
-        <h2>Extracted URLs</h2>
-        <ul>
-          {urls.length === 0 ? (
-            <li>No URLs found</li>
-          ) : (
-            urls.map((url, index) => (
-              <li key={index}>
-                <a href={url} target="_blank" rel="noopener noreferrer">
-                  {url}
-                </a>
-              </li>
-            ))
-          )}
-        </ul>
+ 
+<div className="extension-container">
+      {/* Header with logo and product info */}
+      <header className="header">
+        <img src={logo} alt="Logo" className="logo" />;
+        <div className="product-info">
+          <h1 className="product-name">TruthGuard</h1>
+          <p className="product-description">
+            TruthGuard is an extension that allows users to input questions, analyze articles, and analyze youtube videos for reliability and up-to-date fact checking.
+          </p>
+        </div>
+      </header>
 
-        <input
-          type="text"
-          placeholder="Enter text to highlight"
-          value={highlightText}
-          onChange={(e) => setHighlightText(e.target.value)}
-          style={{ width: "100%", padding: "5px", marginBottom: "10px" }}
-        />
-        <button
-          onClick={handleHighlight}
-          style={{ width: "100%", padding: "10px" }}
-        >
-          Highlight
-        </button>
+      {/* Home Tab */}
+      {activeTab === "home" && (
+        <div className="home-tab">
+          <div className="input-section">
+            <input
+              type="text"
+              placeholder="Enter text or URL here..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="text-input"
+            />
+            <button onClick={handleSubmitInput} className="submit-button">
+              Submit
+            </button>
+          </div>
+          <div className="action-buttons">
+            <button
+              onClick={handleSummarizeArticle}
+              className="action-button"
+            >
+              Check Article
+            </button>
+            <button
+              onClick={handleSummarizeVideo}
+              className="action-button"
+            >
+              Check YouTube Video
+            </button>
+          </div>
+        </div>
+      )}
 
-        <h2>Extract Page Text</h2>
-        <button
-          onClick={handleExtractText}
-          style={{ width: "100%", padding: "10px" }}
-        >
-          Extract Text
-        </button>
-        <pre>{extractedText}</pre>
+            {/* Input Summary Tab */}
+            {activeTab === "input" && (
+        <div className="result-tab">
+          <button onClick={() => setActiveTab("home")} className="back-button">
+            ← Back
+          </button>
+          <h2>Input Summary</h2>
+          <div className="result-content">
+            <div className="result-section">
+              <h3>Summary</h3>
+              <p>{inputData.summary}</p>
+            </div>
+            <div className="result-section">
+              <h3>Citations</h3>
+              {inputData.citations.length > 0 ? (
+                <div className="citation-cards">
+                  {inputData.citations.map((citation, index) => (
+                    <div key={index} className="citation-card">
+                      <span role="img" aria-label="citation">
+                        🔗
+                      </span>{" "}
+                      {citation}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>(No citations available)</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
 
-      <button onClick={handleSummarizeArticle} style={{ width: "100%", padding: "10px" }}>
-        Click button to get
-      </button>
-      <pre>{summary}</pre>
+      {/* Article Summary Tab */}
+      {activeTab === "article" && (
+        <div className="result-tab">
+          <button
+            onClick={() => setActiveTab("home")}
+            className="back-button"
+          >
+            ← Back
+          </button>
+          <h2>Article Summary</h2>
+          <div className="result-content">
+            <div className="result-section">
+              <h3>Classification</h3>
+              <p>{articleData.classification}</p>
+            </div>
+            <div className="result-section">
+              <h3>Summary</h3>
+              <p>{articleData.summary}</p>
+            </div>
+            <div className="result-section">
+              <h3>Misleading Quotes</h3>
+              {Object.keys(articleData.misleadingQuotes).length > 0 ? (
+                <ul>
+                  {(Object.entries(
+                    articleData.misleadingQuotes
+                  ) as [string, string][]).map(
+                    ([timestamp, explanation], index) => (
+                      <li key={index}>
+                        <strong>{timestamp}</strong>: {explanation}
+                      </li>
+                    )
+                  )}
+                </ul>
+              ) : (
+                <p>(No misleading quotes identified)</p>
+              )}
+            </div>
+            <div className="result-section">
+              
+              <h3>Citations</h3>
+              {articleData.citations.length > 0 ? (
+                <div className="citation-cards">
+                  {articleData.citations.map((citation, index) => (
+                    <div key={index} className="citation-card">
+                      <span role="img" aria-label="citation">
+                        🔗
+                      </span>{" "}
+                      {citation}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>(No citations available)</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
 
-        <button
-          onClick={handleSummarizeVideo}
-          style={{ width: "100%", padding: "10px" }}
-        >
-          Click button to get video summary
-        </button>
-        <pre>{ytSummary}</pre>
-      </div>
+      {/* Video Summary Tab */}
+      {activeTab === "video" && (
+        <div className="result-tab">
+          <button
+            onClick={() => setActiveTab("home")}
+            className="back-button"
+          >
+            ← Back
+          </button>
+          <h2>Video Summary</h2>
+          <div className="result-content">
+            <div className="result-section">
+              <h3>Classification</h3>
+              <p>{videoData.classification}</p>
+            </div>
+            <div className="result-section">
+              <h3>Summary</h3>
+              <p>{videoData.summary}</p>
+            </div>
+            <div className="result-section">
+              <h3>Misleading Quotes</h3>
+              {Object.keys(videoData.misleadingQuotes).length > 0 ? (
+                <ul>
+                  {(Object.entries(
+                    videoData.misleadingQuotes
+                  ) as [string, string][]).map(
+                    ([timestamp, explanation], index) => (
+                      <li key={index}>
+                        <strong>{timestamp}</strong>: {explanation}
+                      </li>
+                    )
+                  )}
+                </ul>
+              ) : (
+                <p>(No misleading quotes identified)</p>
+              )}
+            </div>
+            <div className="result-section">
+              <h3>Citations</h3>
+              {videoData.citations.length > 0 ? (
+                <div className="citation-cards">
+                  {videoData.citations.map((citation, index) => (
+                    <div key={index} className="citation-card">
+                      <span role="img" aria-label="citation">
+                        🔗
+                      </span>{" "}
+                      {citation}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>(No citations available)</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

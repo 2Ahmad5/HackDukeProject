@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Search URL Extractor",
+  "name": "TruthGuard",
   "version": "1.0",
   "description": "Extracts URLs from Google search results.",
   "permissions": ["activeTab", "scripting"],
@@ -18,7 +18,7 @@
   "action": {
     "default_popup": "index.html",
     "default_icon": {
-      
+      "128": "backend/icons/truthicon.png"
     }
   }
 }
