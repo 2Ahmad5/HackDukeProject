@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from flask_cors import CORS
 from youtube_transcript import YouTubeTranscriptFetcher
+import json
 
 
 app = Flask(__name__)
@@ -29,8 +30,36 @@ def check_article_reliability(context):
     payload = {
         "model": "sonar",
         "messages": [
-            {"role": "system", "content": "You are a helpful assistant designed to answer questions about a provided reading, along with providing output in a rigorous format so that it can be passed into a front-end. Follow these instructions exactly, without any additional text whatsover: First assign a classification to the article out of Highly Reliable, Somewhat Reliable, Somewhat Misleading, and Unreliable. Second, in a new line, give a 1 paragraph summary, followed by a newline. Third, quote statements from the article verbatim that may be false or misleading. After each quote, explain why you chose to include that quote, and always cite evidence to support your explanation. Seperate all of these with new lines. If there are no misleading quotes in the entire article, only print N/A after the summary and nothing else."},
-            {"role": "user", "content": f"How reliable is this article? {context}"}
+            {
+                "role": "system",
+                "content": 
+                    "You are a helpful assistant designed to analyze the reliability of a given article and provide structured output. "
+                    "Follow this format **exactly**, without any additional text or explanation:\n\n"
+                    "0. **Classification**: Assign a classification to the article out of Highly Reliable, Somewhat Reliable, Somewhat Misleading, and Unreliable.\n\n"
+                    "1. **Summary**: Provide a one-paragraph summary of the article's content.\n\n"
+                    "2. **Misleading Quotes**: Extract quotes from the article that are potentially misleading or unreliable. Present this as a dictionary where:\n"
+                    "   - The **key** is the exact quote from the article.\n"
+                    "   - The **value** is an explanation of why this quote was flagged, citing evidence where possible.\n\n"
+                    "3. **Citations**: Provide an array of sources that support your explanations for why certain quotes may be misleading.\n\n"
+                    "Your response **must** be structured **strictly** as follows:\n"
+                    "```\n"
+                    "{\n"
+                    '   "classification": "<Reliability Classification>",\n'
+                    '   "summary": "<Summary of the article>",\n'
+                    '   "misleading_quotes": {\n'
+                    '       "<Quote 1>": "<Explanation of why this quote is misleading>",\n'
+                    '       "<Quote 2>": "<Explanation of why this quote is misleading>"\n'
+                    "   },\n"
+                    "}\n"
+                    "```\n"
+                    "If there are no misleading quotes, return an empty dictionary for 'misleading_quotes'. If no citations are available, return an empty list for 'citations'.\n"
+                    "Do not include any other text or commentary outside of this format."
+                
+            },
+            {
+                "role": "user",
+                "content": f"Analyze the reliability of this article and structure your response as instructed: {context}"
+            }
         ],
         "return_citations": True
     }
@@ -39,18 +68,42 @@ def check_article_reliability(context):
     
     # Debugging information
     print("Status Code:", response.status_code)
-    
+
     try:
+        # Parse JSON response
         response_json = response.json()
+
+        print("response_json:", response_json)  # Debugging
+        
+        # Extract structured content
         content = response_json['choices'][0]['message']['content']
-        citations = response_json.get('citations', [])
         
-        # print("Content:", content)
-        # print("Citations:", citations)
+        print("content:", content)  # Debugging
         
-        return {"content": content, "citations": citations}
-    except requests.exceptions.JSONDecodeError:
+        # Directly use content as a dictionary, no need for json.loads()
+        structured_response = content
+
+        print("structured_response:", structured_response)  # Debugging
+
+        # Ensure correct keys exist in response
+        classification = structured_response.get("classification", "Unknown")
+        summary = structured_response.get("summary", "")
+        misleading_quotes = structured_response.get("misleading_quotes", {})
+        citations = structured_response.get("citations", [])
+
+        print("testing testing testing")  # Debugging
+
+        return {
+            "classification": classification,
+            "summary": summary,
+            "misleading_quotes": misleading_quotes,
+            "citations": citations
+        }
+    
+    except (requests.exceptions.JSONDecodeError, json.JSONDecodeError) as e:
+        print("JSON Decode Error:", e)  # Debugging error message
         return {"error": "Invalid JSON response"}
+
 
 @app.route('/check_reliability', methods=['POST'])
 def process_article():
@@ -61,6 +114,8 @@ def process_article():
 
     article_url = data['url']
     result = check_article_reliability(article_url)
+
+    print(result)
    
     return jsonify({"result": result})
 

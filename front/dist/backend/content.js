@@ -76,13 +76,31 @@ async function summarizeText(text, sendResponse){
         let data = await response.json();
         console.log("Reliability Check Result:", data);
 
-        sendResponse({ summary: data.result.content, citations: data.result.citations });
+        let classification = data.result.classification;
+        let summary = data.result.summary;
+        let citations = data.result.citations;
+        let misleadingQuotes = data.result.misleading_quotes; // Object with quotes as keys and explanations as values
 
+        // Call highlightText for each misleading quote
+        for (let quote in misleadingQuotes) {
+            highlightText(quote, misleadingQuotes[quote]);
+        }
+
+        // Send response back with the required fields
+        console.log(misleadingQuotes)
+        sendResponse({
+            classification: classification,
+            summary: summary,
+            citations: citations
+        });
 
     } catch (error) {
         console.error("Error:", error);
-        sendResponse({ summary: "Error fetching summary." });
-
+        sendResponse({
+            classification: "Unknown",
+            summary: "Error fetching summary.",
+            citations: []
+        });
     }
 }
 
@@ -109,7 +127,7 @@ async function getYoutube(url, sendResponse) {
 }
 
 
-function highlightText(targetText) {
+function highlightText(targetText, explanation) {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
 
     while (walker.nextNode()) {
@@ -126,7 +144,7 @@ function highlightText(targetText) {
 
             // Create tooltip box
             let tooltip = document.createElement("div");
-            tooltip.textContent = "Highlighted";
+            tooltip.textContent = explanation;
             tooltip.style.position = "absolute";
             tooltip.style.left = "100%"; // Position to the right of the highlight
             tooltip.style.top = "50%";

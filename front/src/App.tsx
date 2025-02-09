@@ -45,22 +45,35 @@ function App() {
   // Handle article summarization
   const handleSummarizeArticle = () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
-      if (tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "summarize" }, (response: { summary?: string, citations?: string[] }) => {
-          if (chrome.runtime.lastError) {
-            console.error("Error:", chrome.runtime.lastError);
-            setSummary("Error fetching summary.");
-          } else {
-            const citationsFormatted = response?.citations?.length
-              ? "\n\nCitations:\n" + response.citations.map((c) => `🔗 ${c}`).join("\n")
-              : "\n\n(No citations available)";
-            
-            setSummary((response?.summary || "No summary found.") + citationsFormatted);
-          }
-        });
-      }
+        if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(
+                tabs[0].id, 
+                { action: "summarize" }, 
+                (response: { classification?: string, summary?: string, citations?: string[] }) => {
+                    if (chrome.runtime.lastError) {
+                        console.error("Error:", chrome.runtime.lastError);
+                        setSummary("Error fetching summary.");
+                    } else {
+                        // Formatting classification
+                        const classificationText = `**Classification:** ${response?.classification || "Unknown"}`;
+
+                        // Formatting summary
+                        const summaryText = response?.summary || "No summary found.";
+
+                        // Formatting citations
+                        const citationsFormatted = response?.citations?.length
+                            ? "\n\n**Citations:**\n" + response.citations.map((c) => `🔗 ${c}`).join("\n")
+                            : "\n\n(No citations available)";
+
+                        // Set everything in summary
+                        setSummary(`${classificationText}\n\n${summaryText}${citationsFormatted}`);
+                    }
+                }
+            );
+        }
     });
-  };
+};
+
   
 
   // Handle YouTube video summarization
