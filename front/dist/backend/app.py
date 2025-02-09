@@ -37,8 +37,8 @@ def check_article_reliability(context):
                     "You are a helpful assistant designed to analyze the reliability of a given article and provide structured output. "
                     "Follow this format **exactly**, without any additional text or explanation:\n\n"
                     "0. **Classification**: Assign a classification to the article out of Highly Reliable, Somewhat Reliable, Somewhat Misleading, and Unreliable.\n\n"
-                    "1. **Summary**: Provide a one-paragraph summary of the article's content.\n\n"
-                    "2. **Misleading Quotes**: Extract quotes from the article that are potentially misleading or unreliable. Present this as a dictionary where:\n"
+                    "1. **Summary**: Provide a one-paragraph summary of the article's content. Make sure to make the summary a STRING\n\n"
+                    "2. **Misleading Quotes**: Extract several (a lot if necessary) quotes from the article that are potentially misleading or unreliable. Present this as a dictionary where:\n"
                     "   - The **key** is the exact quote from the article.\n"
                     "   - The **value** is an explanation of why this quote was flagged, citing evidence where possible.\n\n"
                     "3. **Citations**: Provide an array of sources that support your explanations for why certain quotes may be misleading.\n\n"
@@ -71,46 +71,29 @@ def check_article_reliability(context):
     print("Status Code:", response.status_code)
 
     try:
-        # Parse JSON response
         response_json = response.json()
-        print("response_json:", response_json)  # Debug
-
         content = response_json["choices"][0]["message"]["content"]
-        print("Raw content:", content)  
+        citations = response_json.get('citations', [])
+        # print("Raw content:", content)
 
-        # Remove JSON code block markers and clean whitespace
         cleaned = content.replace("```json", "").replace("```", "").strip()
 
-        # First, find the summary section
-        summary_start = cleaned.find('"summary":') + len('"summary":')
-        summary_end = cleaned.find('"misleading_quotes":', summary_start)
-        
-        if summary_end == -1:  # If misleading_quotes isn't found, try finding the next field
-            summary_end = cleaned.find(',"citations":', summary_start)
-
-        if summary_start != -1 and summary_end != -1:
-            # Extract the summary content
-            summary_content = cleaned[summary_start:summary_end].strip()
-            
-            # Remove any existing quotes and commas at the end
-            summary_content = summary_content.strip('," \n')
-            
-            # Create the properly formatted summary string with escaped quotes
-            summary_string = f'"summary": "{summary_content}",'
-            
-            # Replace the original summary section with the properly formatted one
-            cleaned = cleaned[:summary_start-len('"summary":')] + summary_string + cleaned[summary_end:]
-
-        # Parse the cleaned JSON
         data = json.loads(cleaned)
+
+        # print(data)
 
         # Extract fields
         classification = data.get("classification", "")
         summary = data.get("summary", "")
         misleading_quotes = data.get("misleading_quotes", {})
-        citations = data.get("citations", [])
+        
 
-        return classification, summary, misleading_quotes, citations
+        return {
+            "classification": classification,
+            "summary": summary,
+            "misleading_quotes": misleading_quotes,
+            "citations": citations
+        }
 
         # 2) Parse the remaining string as JSON
         structured_response = json.loads(content_str)
