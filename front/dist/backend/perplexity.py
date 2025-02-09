@@ -69,7 +69,7 @@ def check_article_reliability(context):
         print("Content:", content)
         print("Citations:", citations)
         
-        return {"content": content, "citations": citations}  # Return both content and citations
+        return {"content": content, "citations": citations} 
     except requests.exceptions.JSONDecodeError:
         return {"error": "Invalid JSON response"}
 

@@ -1,49 +1,51 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 
 function App() {
-  const [urls, setUrls] = useState<string[]>([]);
-  const [highlightText, setHighlightText] = useState("");
-  const [extractedText, setExtractedText] = useState("Click the button to extract text.");
+  // const [urls, setUrls] = useState<string[]>([]);
+  // const [highlightText, setHighlightText] = useState("");
+  // const [extractedText, setExtractedText] = useState("Click the button to extract text.");
   const [summary, setSummary] = useState("Click button to get page summary");
   const [ytSummary, setYtSummary] = useState("Click button to get video summary");
+  const [activeTab, setActiveTab] = useState("home")
 
   // Fetch URLs from content script
-  useEffect(() => {
-    chrome.runtime.sendMessage({ action: "getUrl" }, (response: { url?: string }) => {
-      console.log("Popup received current page URL:", response?.url); // Debugging log
-      if (response?.url) {
-        setUrls([response.url]);
-        console.log("SUCEEDEDED")
-      }else{
-        console.log("faileddd")
-      }
-    });
-  }, []);
+  // useEffect(() => {
+  //   chrome.runtime.sendMessage({ action: "getUrl" }, (response: { url?: string }) => {
+  //     console.log("Popup received current page URL:", response?.url); // Debugging log
+  //     if (response?.url) {
+  //       setUrls([response.url]);
+  //       console.log("SUCEEDEDED")
+  //     }else{
+  //       console.log("faileddd")
+  //     }
+  //   });
+  // }, []);
 
   // Handle highlight text
-  const handleHighlight = () => {
-    if (highlightText.trim()) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].id) {
-          chrome.tabs.sendMessage(tabs[0].id, { action: "highlight", text: highlightText });
-        }
-      });
-    }
-  };
+  // const handleHighlight = () => {
+  //   if (highlightText.trim()) {
+  //     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
+  //       if (tabs[0].id) {
+  //         chrome.tabs.sendMessage(tabs[0].id, { action: "highlight", text: highlightText });
+  //       }
+  //     });
+  //   }
+  // };
 
-  // Handle text extraction
-  const handleExtractText = () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
-      if (tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "extractText" }, (response: { text?: string }) => {
-          setExtractedText(response?.text || "No text found.");
-        });
-      }
-    });
-  };
+  // // Handle text extraction
+  // const handleExtractText = () => {
+  //   chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
+  //     if (tabs[0].id) {
+  //       chrome.tabs.sendMessage(tabs[0].id, { action: "extractText" }, (response: { text?: string }) => {
+  //         setExtractedText(response?.text || "No text found.");
+  //       });
+  //     }
+  //   });
+  // };
 
   // Handle article summarization
   const handleSummarizeArticle = () => {
+    setActiveTab("article")
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
         if (tabs[0]?.id) {
             chrome.tabs.sendMessage(
@@ -78,6 +80,7 @@ function App() {
 
   // Handle YouTube video summarization
   const handleSummarizeVideo = () => {
+    setActiveTab("video")
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
       if (tabs[0].id) {
         chrome.tabs.sendMessage(tabs[0].id, { action: "youtube_summary" }, (response: { summary?: string }) => {
@@ -92,49 +95,115 @@ function App() {
     });
   };
 
+
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", padding: "10px", width: "300px" }}>
-      <h2>Extracted URLs</h2>
-      <ul>
-        {urls.length === 0 ? (
-          <li>No URLs found</li>
-        ) : (
-          urls.map((url, index) => (
-            <li key={index}>
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                {url}
-              </a>
-            </li>
-          ))
-        )}
-      </ul>
+    // <div style={{ fontFamily: "Arial, sans-serif", padding: "10px", width: "300px" }}>
+    //   <h2>Extracted URLs</h2>
+    //   <ul>
+    //     {urls.length === 0 ? (
+    //       <li>No URLs found</li>
+    //     ) : (
+    //       urls.map((url, index) => (
+    //         <li key={index}>
+    //           <a href={url} target="_blank" rel="noopener noreferrer">
+    //             {url}
+    //           </a>
+    //         </li>
+    //       ))
+    //     )}
+    //   </ul>
 
-      <input
-        type="text"
-        placeholder="Enter text to highlight"
-        value={highlightText}
-        onChange={(e) => setHighlightText(e.target.value)}
-        style={{ width: "100%", padding: "5px", marginBottom: "10px" }}
-      />
-      <button onClick={handleHighlight} style={{ width: "100%", padding: "10px" }}>
-        Highlight
-      </button>
+    //   <input
+    //     type="text"
+    //     placeholder="Enter text to highlight"
+    //     value={highlightText}
+    //     onChange={(e) => setHighlightText(e.target.value)}
+    //     style={{ width: "100%", padding: "5px", marginBottom: "10px" }}
+    //   />
+    //   <button onClick={handleHighlight} style={{ width: "100%", padding: "10px" }}>
+    //     Highlight
+    //   </button>
 
-      <h2>Extract Page Text</h2>
-      <button onClick={handleExtractText} style={{ width: "100%", padding: "10px" }}>
-        Extract Text
-      </button>
-      <pre>{extractedText}</pre>
+    //   <h2>Extract Page Text</h2>
+    //   <button onClick={handleExtractText} style={{ width: "100%", padding: "10px" }}>
+    //     Extract Text
+    //   </button>
+    //   <pre>{extractedText}</pre>
 
-      <button onClick={handleSummarizeArticle} style={{ width: "100%", padding: "10px" }}>
-        Click button to get
-      </button>
-      <pre>{summary}</pre>
+    //   <button onClick={handleSummarizeArticle} style={{ width: "100%", padding: "10px" }}>
+    //     Click button to get
+    //   </button>
+    //   <pre>{summary}</pre>
 
-      <button onClick={handleSummarizeVideo} style={{ width: "100%", padding: "10px" }}>
-        Click button to get video summary
-      </button>
-      <pre>{ytSummary}</pre>
+    //   <button onClick={handleSummarizeVideo} style={{ width: "100%", padding: "10px" }}>
+    //     Click button to get video summary
+    //   </button>
+    //   <pre>{ytSummary}</pre>
+    // </div>
+    <div className="container">
+      {activeTab === "home" && (
+        <>
+          {/* <h2>Extracted URLs</h2>
+          <ul className="url-list">
+            {urls.length === 0 ? (
+              <li>No URLs found</li>
+            ) : (
+              urls.map((url, index) => (
+                <li key={index}>
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    {url}
+                  </a>
+                </li>
+              ))
+            )}
+          </ul>
+
+          <input
+            type="text"
+            placeholder="Enter text to highlight"
+            value={highlightText}
+            onChange={(e) => setHighlightText(e.target.value)}
+            className="input"
+          />
+          <button onClick={handleHighlight} className="button">
+            Highlight
+          </button>
+
+          <h2>Extract Page Text</h2>
+          <button onClick={handleExtractText} className="button">
+            Extract Text
+          </button>
+          <pre className="extracted-text">{extractedText}</pre> */}
+
+          <button onClick={handleSummarizeArticle} className="button">
+            Summarize Article
+          </button>
+
+          <button onClick={handleSummarizeVideo} className="button">
+            Summarize Video
+          </button>
+        </>
+      )}
+
+      {activeTab === "article" && (
+        <div className="summary-tab">
+          <button onClick={() => setActiveTab("home")} className="back-button">
+            Back
+          </button>
+          <h2>Article Summary</h2>
+          <pre className="summary-text">{summary}</pre>
+        </div>
+      )}
+
+      {activeTab === "video" && (
+        <div className="summary-tab">
+          <button onClick={() => setActiveTab("home")} className="back-button">
+            Back
+          </button>
+          <h2>Video Summary</h2>
+          <pre className="summary-text">{ytSummary}</pre>
+        </div>
+      )}
     </div>
   );
 }
