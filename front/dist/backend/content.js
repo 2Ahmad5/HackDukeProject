@@ -1,8 +1,6 @@
 // Function to extract URLs from Google search results
 const currentUrl = window.location.href;
 
-
-
 // Send the URL to the background script
 chrome.runtime.sendMessage({ url: currentUrl });
 console.log("Current page URL sent:", currentUrl);
@@ -41,6 +39,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             console.error("no input provvided");
         }
     }
+
 });
 
 function extractVideoId(url) {
@@ -81,6 +80,7 @@ async function getPersonalText(text, sendResponse) {
         });
     }
 }
+
 
 async function summarizeText(text, sendResponse){
     try {
@@ -210,22 +210,23 @@ function highlightText(targetText, explanation) {
             console.log("Highlighted first occurrence:", targetText); // Debugging log
             break;
         }
+
     }
+  }
 }
 
-
 function extractPageText() {
-    let bodyText = document.body.innerText || document.body.textContent;
-    return bodyText.trim();
+  let bodyText = document.body.innerText || document.body.textContent;
+  return bodyText.trim();
 }
 
 // Listen for a message from popup.js to send extracted text
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "extractText") {
-        let pageText = extractPageText();
-        console.log("Extracted Page Text:", pageText); // Debugging log
-        sendResponse({ text: pageText });
-    }
+  if (message.action === "extractText") {
+    let pageText = extractPageText();
+    console.log("Extracted Page Text:", pageText); // Debugging log
+    sendResponse({ text: pageText });
+  }
 });
 
 // highlightText("Ye");

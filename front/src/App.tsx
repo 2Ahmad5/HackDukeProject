@@ -2,6 +2,7 @@ import { useState} from "react";
 import logo from './logo.png';
 
 function App() {
+
   // const [urls, setUrls] = useState<string[]>([]);
   // const [highlightText, setHighlightText] = useState("");
   // const [extractedText, setExtractedText] = useState("Click the button to extract text.");
@@ -54,10 +55,11 @@ function App() {
             // Open the new tab to display the results
             setActiveTab("input");
           }
-        );
+        )
       }
     });
   };
+
 
     const handleSummarizeArticle = () => {
       setActiveTab("article");
@@ -92,6 +94,7 @@ function App() {
     };
 
 
+
   const handleSummarizeVideo = () => {
     setActiveTab("video");
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -118,8 +121,9 @@ function App() {
             }
           }
         );
+
       }
-    });
+    );
   };
 
 
@@ -202,6 +206,7 @@ function App() {
         </div>
       )}
 
+
       {/* Article Summary Tab */}
       {activeTab === "article" && (
         <div className="result-tab">
@@ -261,6 +266,7 @@ function App() {
         </div>
       )}
 
+
       {/* Video Summary Tab */}
       {activeTab === "video" && (
         <div className="result-tab">
@@ -318,6 +324,7 @@ function App() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

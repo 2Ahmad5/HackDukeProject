@@ -52,6 +52,7 @@ def check_article_reliability(context):
                 "role": "user",
                 "content": f"Analyze the reliability of this article and structure your response as instructed: {context}"
             }
+
         ],
         "return_citations": True
     }

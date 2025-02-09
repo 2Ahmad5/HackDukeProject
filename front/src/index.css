@@ -22,6 +22,7 @@
 }
 .product-info .product-name {
   margin: 0;
+
   font-size: 1.8em;
   font-weight: bold;
   color: #2c3e50;
@@ -30,6 +31,7 @@
   margin: 5px 0 0 0;
   font-size: 0.95em;
   color: #7f8c8d;
+
 }
 
 /* Home tab layout */

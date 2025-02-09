@@ -1,3 +1,25 @@
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "highlightText",
+    title: "Highlight Text",
+    contexts: ["selection"],
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "highlightText" && info.selectionText) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: "highlight",
+          text: info.selectionText,
+        });
+      }
+    });
+  }
+});
+
 // let storedUrls = [];
 
 // chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -15,6 +37,8 @@
 //         console.log("Popup requested URLs, sending:", storedUrls);
 //         sendResponse({ urls: storedUrls });
 //     }
+  
+
 let currentPageUrl = "";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -30,3 +54,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true; // Keeps sendResponse() alive for async requests
 });
+
+

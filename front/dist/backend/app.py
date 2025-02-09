@@ -2,14 +2,12 @@ from flask import Flask, request, jsonify
 import requests
 import os
 from dotenv import load_dotenv
-from flask_cors import CORS
 from youtube_transcript import YouTubeTranscriptFetcher
 import json
 import re
 
 
 app = Flask(__name__)
-CORS(app)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -61,6 +59,7 @@ def check_video_reliability(context):
                 "role": "user",
                 "content": f"Analyze the reliability of this article and structure your response as instructed: {context}"
             }
+
         ],
         "return_citations": True
     }
@@ -130,6 +129,7 @@ def check_manual_text(context):
         
         print("Content:", content)
         print("Citations:", citations)
+
         
         return {"content": content, "citations": citations} 
     except requests.exceptions.JSONDecodeError:
@@ -211,6 +211,7 @@ def check_article_reliability(context):
 
 
 @app.route('/check_reliability', methods=['POST'])
+
 def process_article():
     data = request.json
     if 'url' not in data:
@@ -250,6 +251,44 @@ def process_youtube():
     print(result.get_transcript())
     res = check_video_reliability(result.get_transcript())
     return jsonify({"result": res})
+
+def check_video_reliability(transcript):
+    # Request payload
+    payload = {
+        "model": "sonar",
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant designed to answer questions about a provided video transcript, along with providing output in a rigorous format so that it can be passed into a front-end. Follow these instructions exactly, without any additional text whatsoever: First, give a 1 paragraph summary, followed by a newline. Second, quote statements (starting and ending at timestamps) from the transcript verbatim that may be false or misleading. After each quote, explain why you chose to include that quote, and always cite evidence to support your explanation. Separate all of these with new lines. If there are no misleading quotes in the entire transcript, only print N/A after the summary and nothing else."},
+            {"role": "user", "content": f"{transcript}"}
+        ],
+        "return_citations": True
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    
+    # Debugging information
+    print("Status Code:", response.status_code)
+    
+    try:
+        response_json = response.json()
+        content = response_json['choices'][0]['message']['content']
+        citations = response_json.get('citations', [])
+        
+        print("Content:", content)
+        print("Citations:", citations)
+        
+        return {"content": content, "citations": citations}  # Return both content and citations
+    except requests.exceptions.JSONDecodeError:
+        return {"error": "Invalid JSON response"}
+
+@app.route('/check_video_reliability', methods=['POST'])
+def process_video():
+    data = request.json
+    if 'transcript' not in data:
+        return jsonify({"error": "Missing 'transcript' field"}), 400
+
+    transcript = data['transcript']
+    result = check_video_reliability(transcript)
+    return jsonify({"result": result})
 
 if __name__ == '__main__':
     app.run(debug=True)
