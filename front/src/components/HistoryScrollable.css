@@ -1,0 +1,15 @@
+.history-scrollable {
+  display: flex;
+  flex-direction: column-reverse;
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.history-scrollable .toast {
+  transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+}
+
+.history-scrollable .toast-deleted {
+  transform: translateY(-100%) 2s ease-in-out;
+  opacity: 0;
+}

@@ -1,0 +1,21 @@
+.toast {
+  margin-bottom: 1rem;
+}
+
+.toast-header {
+  background-color: #343a40;
+  color: #fff;
+}
+
+.toast-body a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.toast-body a:hover {
+  text-decoration: underline;
+}
+
+.toast-link {
+  font-size: 0.9rem;
+}
