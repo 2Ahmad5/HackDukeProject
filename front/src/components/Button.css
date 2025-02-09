@@ -1,0 +1,13 @@
+.styled-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.styled-button:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
