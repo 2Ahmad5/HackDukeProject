@@ -14,6 +14,7 @@ function App() {
 
   // Fetch URLs from content script
   useEffect(() => {
+
     if (chrome.runtime) {
       chrome.runtime.sendMessage(
         { action: "getUrl" },
@@ -41,6 +42,15 @@ function App() {
       if (changes.selectedText) {
         setSelectedText(changes.selectedText.newValue);
         setHighlightText(changes.selectedText.newValue); // Use selectedText as input
+
+    chrome.runtime.sendMessage({ action: "getUrl" }, (response: { url?: string }) => {
+      console.log("Popup received current page URL:", response?.url); // Debugging log
+      if (response?.url) {
+        setUrls([response.url]);
+        console.log("SUCEEDEDED")
+      }else{
+        console.log("faileddd")
+
       }
     });
   }, []);
@@ -82,26 +92,28 @@ function App() {
 
   // Handle article summarization
   const handleSummarizeArticle = () => {
-    chrome.tabs.query(
-      { active: true, currentWindow: true },
-      (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].id) {
-          chrome.tabs.sendMessage(
-            tabs[0].id,
-            { action: "summarize" },
-            (response: { summary?: string }) => {
-              if (chrome.runtime.lastError) {
-                console.error("Error:", chrome.runtime.lastError);
-                setSummary("Error fetching summary.");
-              } else {
-                setSummary(response?.summary || "No summary found.");
-              }
-            }
-          );
-        }
+
+   
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
+      if (tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "summarize" }, (response: { summary?: string, citations?: string[] }) => {
+          if (chrome.runtime.lastError) {
+            console.error("Error:", chrome.runtime.lastError);
+            setSummary("Error fetching summary.");
+          } else {
+            const citationsFormatted = response?.citations?.length
+              ? "\n\nCitations:\n" + response.citations.map((c) => `🔗 ${c}`).join("\n")
+              : "\n\n(No citations available)";
+            
+            setSummary((response?.summary || "No summary found.") + citationsFormatted);
+          }
+        });
+
       }
     );
   };
+  
 
   // Handle YouTube video summarization
   const handleSummarizeVideo = () => {
@@ -174,13 +186,12 @@ function App() {
         </button>
         <pre>{extractedText}</pre>
 
-        <button
-          onClick={handleSummarizeArticle}
-          style={{ width: "100%", padding: "10px" }}
-        >
-          Click button to get summary
-        </button>
-        <pre>{summary}</pre>
+
+      <button onClick={handleSummarizeArticle} style={{ width: "100%", padding: "10px" }}>
+        Click button to get
+      </button>
+      <pre>{summary}</pre>
+
 
         <button
           onClick={handleSummarizeVideo}
