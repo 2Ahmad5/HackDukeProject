@@ -67,6 +67,7 @@ function App() {
             tabs[0].id,
             { action: "summarize" },
             (response) => {
+              console.log("respoesinesofns", response)
               if (chrome.runtime.lastError) {
                 console.error("Error:", chrome.runtime.lastError);
                 setArticleData({
@@ -76,7 +77,7 @@ function App() {
                   misleadingQuotes: {},
                 });
               } else {
-                console.log("respoesinesofns", response)
+                
                 setArticleData({
                   classification: response?.classification || "Unknown",
                   summary: response?.summary || "No summary found.",
@@ -131,8 +132,7 @@ function App() {
         <div className="product-info">
           <h1 className="product-name">TruthGuard</h1>
           <p className="product-description">
-            Quickly summarize articles and YouTube videos to get concise
-            classifications, summaries, and citations.
+            TruthGuard is an extension that allows users to input questions, analyze articles, and analyze youtube videos for reliability and up-to-date fact checking.
           </p>
         </div>
       </header>
@@ -223,10 +223,10 @@ function App() {
             </div>
             <div className="result-section">
               <h3>Misleading Quotes</h3>
-              {Object.keys(videoData.misleadingQuotes).length > 0 ? (
+              {Object.keys(articleData.misleadingQuotes).length > 0 ? (
                 <ul>
                   {(Object.entries(
-                    videoData.misleadingQuotes
+                    articleData.misleadingQuotes
                   ) as [string, string][]).map(
                     ([timestamp, explanation], index) => (
                       <li key={index}>

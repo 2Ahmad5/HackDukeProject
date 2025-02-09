@@ -121,7 +121,9 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 8px;
+  justify-content: center; /* Center cards in the parent */
 }
+
 .citation-card {
   background: #ecf0f1;
   border: 1px solid #bdc3c7;
@@ -131,7 +133,13 @@
   color: #2c3e50;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
+  
+  width: 90%; /* Make cards 90% of the parent width */
+  max-width: 600px; /* Prevent them from getting too wide on large screens */
+  word-wrap: break-word; /* Break long words to prevent overflow */
+  overflow-wrap: break-word; /* Ensure long words don't overflow */
 }
+
 .citation-card:hover {
   transform: translateY(-2px);
 }

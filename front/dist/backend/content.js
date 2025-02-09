@@ -110,7 +110,7 @@ async function summarizeText(text, sendResponse){
         sendResponse({
             classification: classification,
             summary: summary,
-            misleading_quotes: data.result.misleading_quotes,
+            misleading_quotes: misleadingQuotes,
             citations: citations
         });
 
@@ -119,7 +119,8 @@ async function summarizeText(text, sendResponse){
         sendResponse({
             classification: "Unknown",
             summary: "Error fetching summary.",
-            citations: []
+            citations: [],
+            misleading_quotes: []
         });
     }
 }
