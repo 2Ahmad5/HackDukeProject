@@ -6,34 +6,33 @@ chrome.runtime.sendMessage({ url: currentUrl });
 console.log("Current page URL sent:", currentUrl);
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "highlight") {
-        highlightText(message.text);
-    } else if (message.action === "summarize") {
-        text = extractPageText();
-        (async () => {
-            await summarizeText(text, sendResponse);
-        })();
+  if (message.action === "highlight") {
+    highlightText(message.text);
+  } else if (message.action === "summarize") {
+    text = extractPageText();
+    (async () => {
+      await summarizeText(text, sendResponse);
+    })();
 
-        return true;
-    }else if (message.action === "youtube_summary"){
-        let text = extractVideoId(currentUrl);
-        
-        if (text) {
-            (async () => {
-                await getYoutube(text, sendResponse);
-            })();
-            return true;
-        } else {
-            console.error("Invalid YouTube URL");
-        }
+    return true;
+  } else if (message.action === "youtube_summary") {
+    let text = extractVideoId(currentUrl);
+
+    if (text) {
+      (async () => {
+        await getYoutube(text, sendResponse);
+      })();
+      return true;
+    } else {
+      console.error("Invalid YouTube URL");
     }
-
+  }
 });
 
 function extractVideoId(url) {
-    const regex = /(?:v=|\/)([0-9A-Za-z_-]{11})/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
+  const regex = /(?:v=|\/)([0-9A-Za-z_-]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
 }
 
 // function highlightText(targetText) {
@@ -80,9 +79,10 @@ async function summarizeText(text, sendResponse) {
     console.error("Error:", error);
     sendResponse({ summary: "Error fetching summary." });
   }
+}
 
 //     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-    
+
 //     while (walker.nextNode()) {
 //         let node = walker.currentNode;
 //         if (node.nodeValue.includes(targetText)) {
@@ -101,56 +101,54 @@ async function summarizeText(text, sendResponse) {
 //             }
 //         }
 //     }
-    
+
 // }
 
-async function summarizeText(text, sendResponse){
-    try {
-        let response = await fetch('http://127.0.0.1:5000/check_reliability', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ url: text })
-        });
-        if(!response.ok){
-            throw new Error(`HTTP Error! Status: ${response.status}`);
-        }
-        let data = await response.json();
-        console.log("Reliability Check Result:", data);
-
-        sendResponse({ summary: data.result.content, citations: data.result.citations });
-
-
-    } catch (error) {
-        console.error("Error:", error);
-        sendResponse({ summary: "Error fetching summary." });
-
+async function summarizeText(text, sendResponse) {
+  try {
+    let response = await fetch("http://127.0.0.1:5000/check_reliability", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url: text }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP Error! Status: ${response.status}`);
     }
+    let data = await response.json();
+    console.log("Reliability Check Result:", data);
+
+    sendResponse({
+      summary: data.result.content,
+      citations: data.result.citations,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    sendResponse({ summary: "Error fetching summary." });
+  }
 }
 
 async function getYoutube(url, sendResponse) {
-    try{
-        let response = await fetch('http://127.0.0.1:5000/get_youtube', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ video_id: url })
-        });
-        if(!response.ok){
-            throw new Error(`HTTP Error! Status: ${response.status}`);
-        }
-        let data = await response.json();
-        console.log("Youtube Summary:", data);
-        sendResponse({ summary: data.result })
-
-    } catch (error){
-        console.error("Error:", error);
-        sendResponse({ summary: "Error fetching YouTube summary." });
+  try {
+    let response = await fetch("http://127.0.0.1:5000/get_youtube", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ video_id: url }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP Error! Status: ${response.status}`);
     }
+    let data = await response.json();
+    console.log("Youtube Summary:", data);
+    sendResponse({ summary: data.result });
+  } catch (error) {
+    console.error("Error:", error);
+    sendResponse({ summary: "Error fetching YouTube summary." });
+  }
 }
-
 
 function highlightText(targetText) {
   const walker = document.createTreeWalker(

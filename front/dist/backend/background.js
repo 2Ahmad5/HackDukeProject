@@ -29,20 +29,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("No URLs received");
   }
 
-  if (message.action === "getUrls") {
-    console.log("Popup requested URLs, sending:", storedUrls);
-    sendResponse({ urls: storedUrls });
-  }
-
-  return true; // Keeps sendResponse() alive for async requests
-});
-
-let currentPageUrl = "";
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.url) {
     currentPageUrl = message.url;
     console.log("Stored current page URL:", currentPageUrl); // Debugging log
+  }
+
+  if (message.action === "getUrls") {
+    console.log("Popup requested URLs, sending:", storedUrls);
+    sendResponse({ urls: storedUrls });
   }
 
   if (message.action === "getUrl") {

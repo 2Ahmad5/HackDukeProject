@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 
 function App() {
   const [urls, setUrls] = useState<string[]>([]);
-  const [, setSelectedText] = useState("");
   const [highlightText, setHighlightText] = useState("");
   const [extractedText, setExtractedText] = useState(
     "Click the button to extract text."
@@ -14,57 +13,22 @@ function App() {
 
   // Fetch URLs from content script
   useEffect(() => {
-    if (chrome.runtime) {
-      chrome.runtime.sendMessage(
-        { action: "getUrl" },
-        (response: { url?: string }) => {
-          console.log("Popup received current page URL:", response?.url); // Debugging log
-          if (response?.url) {
-            setUrls([response.url]);
-          }
-        }
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    if (chrome.storage) {
-      chrome.storage.local.get(["selectedText"], (result) => {
-        if (result.selectedText) {
-          setSelectedText(result.selectedText);
-          setHighlightText(result.selectedText); // Use selectedText as input
-          // Clear the storage after retrieving
-          chrome.storage.local.remove("selectedText");
-        }
-      });
-
-      chrome.storage.onChanged.addListener((changes) => {
-        if (changes.selectedText) {
-          setSelectedText(changes.selectedText.newValue);
-          setHighlightText(changes.selectedText.newValue); // Use selectedText as input
-        }
-      });
-    }
-  }, []);
-
-  const saveCurrentUrlToHistory = () => {
-    chrome.tabs.query(
-      { active: true, currentWindow: true },
-      (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].url) {
-          chrome.storage.local.get({ history: [] }, (result) => {
-            const history = result.history;
-            history.push(tabs[0].url);
-            chrome.storage.local.set({ history });
-          });
+    chrome.runtime.sendMessage(
+      { action: "getUrl" },
+      (response: { url?: string }) => {
+        console.log("Popup received current page URL:", response?.url); // Debugging log
+        if (response?.url) {
+          setUrls([response.url]);
+          console.log("SUCEEDEDED");
+        } else {
+          console.log("faileddd");
         }
       }
     );
-  };
+  }, []);
 
   // Handle highlight text
   const handleHighlight = () => {
-    saveCurrentUrlToHistory();
     if (highlightText.trim()) {
       chrome.tabs.query(
         { active: true, currentWindow: true },
@@ -82,7 +46,6 @@ function App() {
 
   // Handle text extraction
   const handleExtractText = () => {
-    saveCurrentUrlToHistory();
     chrome.tabs.query(
       { active: true, currentWindow: true },
       (tabs: chrome.tabs.Tab[]) => {
@@ -101,20 +64,40 @@ function App() {
 
   // Handle article summarization
   const handleSummarizeArticle = () => {
-    saveCurrentUrlToHistory();
     chrome.tabs.query(
       { active: true, currentWindow: true },
       (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].id) {
+        if (tabs[0]?.id) {
           chrome.tabs.sendMessage(
             tabs[0].id,
             { action: "summarize" },
-            (response: { summary?: string }) => {
+            (response: {
+              classification?: string;
+              summary?: string;
+              citations?: string[];
+            }) => {
               if (chrome.runtime.lastError) {
                 console.error("Error:", chrome.runtime.lastError);
                 setSummary("Error fetching summary.");
               } else {
-                setSummary(response?.summary || "No summary found.");
+                // Formatting classification
+                const classificationText = `**Classification:** ${
+                  response?.classification || "Unknown"
+                }`;
+
+                // Formatting summary
+                const summaryText = response?.summary || "No summary found.";
+
+                // Formatting citations
+                const citationsFormatted = response?.citations?.length
+                  ? "\n\n**Citations:**\n" +
+                    response.citations.map((c) => `🔗 ${c}`).join("\n")
+                  : "\n\n(No citations available)";
+
+                // Set everything in summary
+                setSummary(
+                  `${classificationText}\n\n${summaryText}${citationsFormatted}`
+                );
               }
             }
           );
@@ -125,7 +108,6 @@ function App() {
 
   // Handle YouTube video summarization
   const handleSummarizeVideo = () => {
-    saveCurrentUrlToHistory();
     chrome.tabs.query(
       { active: true, currentWindow: true },
       (tabs: chrome.tabs.Tab[]) => {
@@ -148,69 +130,66 @@ function App() {
   };
 
   return (
-    <div>
-      <h1>Test Element</h1>
-      <div
-        style={{
-          fontFamily: "Arial, sans-serif",
-          padding: "10px",
-          width: "300px",
-        }}
+    <div
+      style={{
+        fontFamily: "Arial, sans-serif",
+        padding: "10px",
+        width: "300px",
+      }}
+    >
+      <h2>Extracted URLs</h2>
+      <ul>
+        {urls.length === 0 ? (
+          <li>No URLs found</li>
+        ) : (
+          urls.map((url, index) => (
+            <li key={index}>
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                {url}
+              </a>
+            </li>
+          ))
+        )}
+      </ul>
+
+      <input
+        type="text"
+        placeholder="Enter text to highlight"
+        value={highlightText}
+        onChange={(e) => setHighlightText(e.target.value)}
+        style={{ width: "100%", padding: "5px", marginBottom: "10px" }}
+      />
+      <button
+        onClick={handleHighlight}
+        style={{ width: "100%", padding: "10px" }}
       >
-        <h2>Extracted URLs</h2>
-        <ul>
-          {urls.length === 0 ? (
-            <li>No URLs found</li>
-          ) : (
-            urls.map((url, index) => (
-              <li key={index}>
-                <a href={url} target="_blank" rel="noopener noreferrer">
-                  {url}
-                </a>
-              </li>
-            ))
-          )}
-        </ul>
+        Highlight
+      </button>
 
-        <input
-          type="text"
-          placeholder="Enter text to highlight"
-          value={highlightText}
-          onChange={(e) => setHighlightText(e.target.value)}
-          style={{ width: "100%", padding: "5px", marginBottom: "10px" }}
-        />
-        <button
-          onClick={handleHighlight}
-          style={{ width: "100%", padding: "10px" }}
-        >
-          Highlight
-        </button>
+      <h2>Extract Page Text</h2>
+      <button
+        onClick={handleExtractText}
+        style={{ width: "100%", padding: "10px" }}
+      >
+        Extract Text
+      </button>
+      <pre>{extractedText}</pre>
 
-        <h2>Extract Page Text</h2>
-        <button
-          onClick={handleExtractText}
-          style={{ width: "100%", padding: "10px" }}
-        >
-          Extract Text
-        </button>
-        <pre>{extractedText}</pre>
+      <button
+        onClick={handleSummarizeArticle}
+        style={{ width: "100%", padding: "10px" }}
+      >
+        Click button to get
+      </button>
+      <pre>{summary}</pre>
 
-        <button
-          onClick={handleSummarizeArticle}
-          style={{ width: "100%", padding: "10px" }}
-        >
-          Click button to get summary
-        </button>
-        <pre>{summary}</pre>
-
-        <button
-          onClick={handleSummarizeVideo}
-          style={{ width: "100%", padding: "10px" }}
-        >
-          Click button to get video summary
-        </button>
-        <pre>{ytSummary}</pre>
-      </div>
+      <button
+        onClick={handleSummarizeVideo}
+        style={{ width: "100%", padding: "10px" }}
+      >
+        Click button to get video summary
+      </button>
+      <pre>{ytSummary}</pre>
     </div>
   );
 }
