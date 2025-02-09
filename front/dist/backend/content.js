@@ -29,6 +29,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else {
             console.error("Invalid YouTube URL");
         }
+    } else if (message.action === "input_text"){
+        let text = message.text;
+
+        if(text){
+            (async () => {
+                await getPersonalText(text, sendResponse);
+            })();
+            return true;
+        } else{
+            console.error("no input provvided");
+        }
     }
 });
 
@@ -38,29 +49,33 @@ function extractVideoId(url) {
     return match ? match[1] : null;
 }
 
-// function highlightText(targetText) {
-//     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-    
-//     while (walker.nextNode()) {
-//         let node = walker.currentNode;
-//         if (node.nodeValue.includes(targetText)) {
-//             const span = document.createElement("span");
-//             span.style.backgroundColor = "yellow";
-//             span.style.fontWeight = "bold";
-//             span.textContent = targetText;
+async function getPersonalText(text, sendResponse) {
+    try {
+        let response = await fetch('http://127.0.0.1:5000/check_manual_text', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: text })
+        });
+        if(!response.ok){
+            throw new Error(`HTTP Error! Status: ${response.status}`);
+        }
+        let data = await response.json();
+        console.log("Reliability Check Result:", data);
 
-//             const newText = node.nodeValue.split(targetText);
-//             const parent = node.parentNode;
+        let summary = data.result.summary;
+        let citations = data.result.citations;
 
-//             if (parent) {
-//                 parent.replaceChild(document.createTextNode(newText[0]), node);
-//                 parent.insertBefore(span, node.nextSibling);
-//                 parent.insertBefore(document.createTextNode(newText[1]), span.nextSibling);
-//             }
-//         }
-//     }
-    
-// }
+    } catch(error){
+        console.error("Error:", error);
+        sendResponse({
+            classification: "Unknown",
+            summary: "Error fetching summary.",
+            citations: []
+        });
+    }
+}
 
 async function summarizeText(text, sendResponse){
     try {
@@ -170,7 +185,7 @@ function highlightText(targetText, explanation) {
             tooltip.style.maxWidth = "250px";           // Limit tooltip width
             tooltip.style.overflowWrap = "break-word";   // Break long words if needed
             tooltip.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.2)";
-            tooltip.style.zIndex = "1000";               // Ensure it appears above other elements
+            tooltip.style.zIndex = "1000";        
             tooltip.style.display = "none"; 
 
             // Show tooltip on hover

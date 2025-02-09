@@ -8,6 +8,10 @@ function App() {
   // const [ytSummary, setYtSummary] = useState("Click button to get video summary");
   const [activeTab, setActiveTab] = useState("home")
   const [inputText, setInputText] = useState("");
+  const [inputData, setInputData] = useState({
+    summary: "",
+    citations: [],
+  });
   const [articleData, setArticleData] = useState({
     classification: "",
     summary: "",
@@ -19,10 +23,36 @@ function App() {
     citations: [],
     misleadingQuotes: {} as Record<string, string>,
   });
+  // const [outputText, setOutputText] = useState("");
 
   const handleSubmitInput = () => {
-
-    console.log("User input:", inputText);
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(
+          tabs[0].id,
+          { action: "input_text", text: inputText },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              console.error("Error:", chrome.runtime.lastError);
+              // Optionally, you can display an error message
+              setInputData({
+                summary: "Error fetching summary.",
+                citations: [],
+              });
+            } else {
+              // Assume that the response returns an object with
+              // a summary and citations property
+              setInputData({
+                summary: response?.summary || "No summary found.",
+                citations: response?.citations || [],
+              });
+            }
+            // Open the new tab to display the results
+            setActiveTab("input");
+          }
+        );
+      }
+    });
   };
 
     const handleSummarizeArticle = () => {
@@ -128,6 +158,39 @@ function App() {
             >
               Check YouTube Video
             </button>
+          </div>
+        </div>
+      )}
+
+            {/* Input Summary Tab */}
+            {activeTab === "input" && (
+        <div className="result-tab">
+          <button onClick={() => setActiveTab("home")} className="back-button">
+            ← Back
+          </button>
+          <h2>Input Summary</h2>
+          <div className="result-content">
+            <div className="result-section">
+              <h3>Summary</h3>
+              <p>{inputData.summary}</p>
+            </div>
+            <div className="result-section">
+              <h3>Citations</h3>
+              {inputData.citations.length > 0 ? (
+                <div className="citation-cards">
+                  {inputData.citations.map((citation, index) => (
+                    <div key={index} className="citation-card">
+                      <span role="img" aria-label="citation">
+                        🔗
+                      </span>{" "}
+                      {citation}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>(No citations available)</p>
+              )}
+            </div>
           </div>
         </div>
       )}
