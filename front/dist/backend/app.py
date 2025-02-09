@@ -29,9 +29,10 @@ def check_article_reliability(context):
     payload = {
         "model": "sonar",
         "messages": [
-            {"role": "system", "content": "You are a helpful assistant designed to answer questions about a provided reading, along with providing output in a rigorous format so that it can be passed into a front-end. Follow these instructions exactly, without any additional text whatsover: First, give a 1 paragraph summary, followed by a newline. Second, quote statements from the article verbatim that may be false or misleading. After each quote, explain why you chose to include that quote, and always cite evidence to support your explanation. Seperate all of these with new lines. If there are no misleading quotes in the entire article, only print N/A after the summary and nothing else."},
-            {"role": "user", "content": f"{context}"}
-        ]
+            {"role": "system", "content": "You are a helpful assistant designed to answer questions about a provided reading, along with providing output in a rigorous format so that it can be passed into a front-end. Follow these instructions exactly, without any additional text whatsover: First assign a classification to the article out of Highly Reliable, Somewhat Reliable, Somewhat Misleading, and Unreliable. Second, in a new line, give a 1 paragraph summary, followed by a newline. Third, quote statements from the article verbatim that may be false or misleading. After each quote, explain why you chose to include that quote, and always cite evidence to support your explanation. Seperate all of these with new lines. If there are no misleading quotes in the entire article, only print N/A after the summary and nothing else."},
+            {"role": "user", "content": f"How reliable is this article? {context}"}
+        ],
+        "return_citations": True
     }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -41,8 +42,13 @@ def check_article_reliability(context):
     
     try:
         response_json = response.json()
-        print(response_json['choices'][0]['message']['content'])
-        return response_json['choices'][0]['message']['content']
+        content = response_json['choices'][0]['message']['content']
+        citations = response_json.get('citations', [])
+        
+        # print("Content:", content)
+        # print("Citations:", citations)
+        
+        return {"content": content, "citations": citations}
     except requests.exceptions.JSONDecodeError:
         return {"error": "Invalid JSON response"}
 
@@ -50,10 +56,12 @@ def check_article_reliability(context):
 def process_article():
     data = request.json
     if 'url' not in data:
+        print("ooofuygcjsdb")
         return jsonify({"error": "Missing 'url' field"}), 400
 
     article_url = data['url']
     result = check_article_reliability(article_url)
+   
     return jsonify({"result": result})
 
 @app.route('/get_youtube', methods=['POST'])
