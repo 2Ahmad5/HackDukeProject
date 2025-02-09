@@ -46,17 +46,22 @@ function App() {
   const handleSummarizeArticle = () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
       if (tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "summarize" }, (response: { summary?: string }) => {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "summarize" }, (response: { summary?: string, citations?: string[] }) => {
           if (chrome.runtime.lastError) {
             console.error("Error:", chrome.runtime.lastError);
             setSummary("Error fetching summary.");
           } else {
-            setSummary(response?.summary || "No summary found.");
+            const citationsFormatted = response?.citations?.length
+              ? "\n\nCitations:\n" + response.citations.map((c) => `🔗 ${c}`).join("\n")
+              : "\n\n(No citations available)";
+            
+            setSummary((response?.summary || "No summary found.") + citationsFormatted);
           }
         });
       }
     });
   };
+  
 
   // Handle YouTube video summarization
   const handleSummarizeVideo = () => {

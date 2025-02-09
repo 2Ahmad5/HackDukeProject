@@ -76,7 +76,8 @@ async function summarizeText(text, sendResponse){
         let data = await response.json();
         console.log("Reliability Check Result:", data);
 
-        sendResponse({ summary: data.result })
+        sendResponse({ summary: data.result.content, citations: data.result.citations });
+
 
     } catch (error) {
         console.error("Error:", error);
