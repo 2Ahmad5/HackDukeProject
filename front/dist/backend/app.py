@@ -29,6 +29,8 @@ def check_article_reliability(context):
         "messages": [
             {"role": "system", "content": "You are a helpful assistant designed to answer questions about a provided reading in user content, along with providing output in a rigorous format so that it can be passed into a front-end. Follow these instructions exactly, without any additional text whatsover: First, give a 1 paragraph summary, followed by a newline. Second, quote statements from the article in user content (and only from user content) verbatim that may be false or misleading. After each quote, explain why you chose to include that quote, and always cite evidence to support your explanation. Seperate all of these with new lines. If there are no misleading quotes in the entire article, say so."},
             {"role": "user", "content": f"{context}"}
+
+
         ],
         "return_citations": True
     }
@@ -43,10 +45,11 @@ def check_article_reliability(context):
         content = response_json['choices'][0]['message']['content']
         citations = response_json.get('citations', [])
         
-        print("Content:", content)
-        print("Citations:", citations)
+
+        # print("Content:", content)
+        # print("Citations:", citations)
         
-        return {"content": content, "citations": citations}  # Return both content and citations
+        return {"content": content, "citations": citations}
     except requests.exceptions.JSONDecodeError:
         return {"error": "Invalid JSON response"}
 
@@ -54,6 +57,7 @@ def check_article_reliability(context):
 def process_article():
     data = request.json
     if 'url' not in data:
+        print("ooofuygcjsdb")
         return jsonify({"error": "Missing 'url' field"}), 400
 
     article_url = data['url']
