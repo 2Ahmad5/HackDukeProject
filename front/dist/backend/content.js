@@ -79,14 +79,12 @@ async function summarizeText(text, sendResponse){
         let classification = data.result.classification;
         let summary = data.result.summary;
         let citations = data.result.citations;
-        let misleadingQuotes = data.result.misleading_quotes; // Object with quotes as keys and explanations as values
+        let misleadingQuotes = data.result.misleading_quotes;
 
-        // Call highlightText for each misleading quote
         for (let quote in misleadingQuotes) {
             highlightText(quote, misleadingQuotes[quote]);
         }
 
-        // Send response back with the required fields
         console.log(misleadingQuotes)
         sendResponse({
             classification: classification,
@@ -118,7 +116,20 @@ async function getYoutube(url, sendResponse) {
         }
         let data = await response.json();
         console.log("Youtube Summary:", data);
-        sendResponse({ summary: data.result })
+
+        let classification = data.result.classification;
+        let summary = data.result.summary;
+        let citations = data.result.citations;
+        let misleading_quotes = data.result.misleading_quotes;
+
+        console.log("CHEKCING", misleading_quotes)
+
+        sendResponse({
+            classification: classification,
+            summary: summary,
+            citations: citations,
+            misleading_quotes: misleading_quotes
+        });
 
     } catch (error){
         console.error("Error:", error);

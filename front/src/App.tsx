@@ -83,13 +83,34 @@ function App() {
     setActiveTab("video")
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
       if (tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "youtube_summary" }, (response: { summary?: string }) => {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "youtube_summary" }, (response: { classification?: string, summary?: string, citations?: string[], misleading_quotes?: { [key: string]: string } }) => {
           if (chrome.runtime.lastError) {
             console.error("Error:", chrome.runtime.lastError);
             setYtSummary("Error fetching video summary.");
           } else {
-            setYtSummary(response?.summary || "No summary found.");
-          }
+            const classificationText = `**Classification:** ${response?.classification || "Unknown"}`;
+    
+            // Formatting summary
+            const summaryText = response?.summary || "No summary found.";
+    
+            // Formatting misleading quotes (handling dictionary format)
+            let misleadingQuotesText = "\n\n**Misleading Quotes:**\n";
+            if (response?.misleading_quotes && Object.keys(response.misleading_quotes).length > 0) {
+                misleadingQuotesText += Object.entries(response.misleading_quotes)
+                    .map(([timestamp, explanation]) => `- **${timestamp}**: ${explanation}`)
+                    .join("\n");
+            } else {
+                misleadingQuotesText += "(No misleading quotes identified)";
+            }
+    
+            // Formatting citations
+            const citationsFormatted = response?.citations?.length
+                ? "\n\n**Citations:**\n" + response.citations.map((c) => `🔗 ${c}`).join("\n")
+                : "\n\n(No citations available)";
+    
+            // Set the final formatted summary including misleading quotes
+            setYtSummary(`${classificationText}\n\n${summaryText}${misleadingQuotesText}${citationsFormatted}`);
+        }
         });
       }
     });

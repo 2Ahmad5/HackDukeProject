@@ -26,6 +26,80 @@ headers = {
     "Content-Type": "application/json"
 }
 
+def check_video_reliability(context):
+    # Request payload
+    payload = {
+        "model": "sonar",
+        "messages": [
+            {
+                "role": "system",
+                "content": 
+                    "You are a helpful assistant designed to analyze the reliability of a given video transcript and provide structured output. "
+                    "Follow this format **exactly**, without any additional text or explanation:\n\n"
+                    "0. **Classification**: Assign a classification to the video transcript out of Highly Reliable, Somewhat Reliable, Somewhat Misleading, and Unreliable.\n\n"
+                    "1. **Summary**: Provide a one-paragraph summary of the video's content. Make sure to make the summary a STRING\n\n"
+                    "2. **Misleading Quotes**: Extract several (a lot if necessary) quotes from the video that are potentially misleading or unreliable. Present this as a dictionary where:\n"
+                    "   - The **key** is the time and exact quote from the video.\n"
+                    "   - The **value** is an explanation of why this quote was flagged, citing evidence where possible.\n\n"
+                    "3. **Citations**: Provide an array of sources that support your explanations for why certain quotes may be misleading.\n\n"
+                    "Your response **must** be structured **strictly** as follows:\n"
+                    "```\n"
+                    "{\n"
+                    '   "classification": "<Reliability Classification>",\n'
+                    '   "summary": "<Summary of the video>",\n'
+                    '   "misleading_quotes": {\n'
+                    '       "<Time in the video FORMATTED IN MINUTES:SECONDS (convert to minutes if you have to)> <Quote 1>": "<Explanation of why this quote is misleading>",\n'
+                    '       "<Time in the video formatted IN MINUTES:SECONDS (convert to minutes if you have to)> <Quote 2>": "<Explanation of why this quote is misleading>"\n'
+                    "   },\n"
+                    "}\n"
+                    "```\n"
+                    "If there are no misleading quotes, return an empty dictionary for 'misleading_quotes'. If no citations are available, return an empty list for 'citations'.\n"
+                    "Do not include any other text or commentary outside of this format."
+                
+            },
+            {
+                "role": "user",
+                "content": f"Analyze the reliability of this article and structure your response as instructed: {context}"
+            }
+        ],
+        "return_citations": True
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    
+    # Debugging information
+    print("Status Code:", response.status_code)
+
+    try:
+        response_json = response.json()
+        print(response_json)
+        content = response_json["choices"][0]["message"]["content"]
+        citations = response_json.get('citations', [])
+        # print("Raw content:", content)
+
+        cleaned = content.replace("```json", "").replace("```", "").strip()
+
+        data = json.loads(cleaned)
+
+        # print(data)
+
+        # Extract fields
+        classification = data.get("classification", "")
+        summary = data.get("summary", "")
+        misleading_quotes = data.get("misleading_quotes", {})
+        
+
+        return {
+            "classification": classification,
+            "summary": summary,
+            "misleading_quotes": misleading_quotes,
+            "citations": citations
+        }
+
+    except (requests.exceptions.JSONDecodeError, json.JSONDecodeError) as e:
+        print("JSON Decode Error:", e)  # Debugging
+        return {"error": "Invalid JSON response"}
+
 def check_article_reliability(context):
     # Request payload
     payload = {
@@ -72,6 +146,7 @@ def check_article_reliability(context):
 
     try:
         response_json = response.json()
+        print(response_json)
         content = response_json["choices"][0]["message"]["content"]
         citations = response_json.get('citations', [])
         # print("Raw content:", content)
@@ -87,37 +162,6 @@ def check_article_reliability(context):
         summary = data.get("summary", "")
         misleading_quotes = data.get("misleading_quotes", {})
         
-
-        return {
-            "classification": classification,
-            "summary": summary,
-            "misleading_quotes": misleading_quotes,
-            "citations": citations
-        }
-
-        # 2) Parse the remaining string as JSON
-        structured_response = json.loads(content_str)
-        print("structured_response:", structured_response)  # Debug
-
-        top_level_citations = response_json.get("citations", [])
-        numeric_citations = structured_response.get("citations", [])
-
-        final_citations = []
-        for idx in numeric_citations:
-            if 1 <= idx <= len(top_level_citations):
-                final_citations.append(top_level_citations[idx - 1])
-            else:
-                final_citations.append(f"Index {idx} out of range")
-
-        # Replace the numeric array with the actual links
-        structured_response["citations"] = final_citations
-
-        classification = structured_response.get("classification", "Unknown")
-        summary = structured_response.get("summary", "")
-        misleading_quotes = structured_response.get("misleading_quotes", {})
-        citations = structured_response.get("citations", [])
-
-        print("testing testing testing")  # Debug
 
         return {
             "classification": classification,
@@ -155,7 +199,8 @@ def process_youtube():
     video_id = data['video_id']
     result = YouTubeTranscriptFetcher(video_id)
     print(result.get_transcript())
-    return jsonify({"result": result.get_transcript()})
+    res = check_video_reliability(result.get_transcript())
+    return jsonify({"result": res})
 
 if __name__ == '__main__':
     app.run(debug=True)
