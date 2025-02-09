@@ -1,4 +1,5 @@
 import { useState} from "react";
+import logo from './logo.png';
 
 function App() {
   // const [urls, setUrls] = useState<string[]>([]);
@@ -16,6 +17,7 @@ function App() {
     classification: "",
     summary: "",
     citations: [],
+    misleadingQuotes: {} as Record<string, string>,
   });
   const [videoData, setVideoData] = useState({
     classification: "",
@@ -27,9 +29,11 @@ function App() {
 
   const handleSubmitInput = () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      console.log("TEXKJNFKBF:", inputText)
       if (tabs[0]?.id) {
         chrome.tabs.sendMessage(
           tabs[0].id,
+          
           { action: "input_text", text: inputText },
           (response) => {
             if (chrome.runtime.lastError) {
@@ -69,12 +73,15 @@ function App() {
                   classification: "Error",
                   summary: "Error fetching summary.",
                   citations: [],
+                  misleadingQuotes: {},
                 });
               } else {
+                console.log("respoesinesofns", response)
                 setArticleData({
                   classification: response?.classification || "Unknown",
                   summary: response?.summary || "No summary found.",
                   citations: response?.citations || [],
+                  misleadingQuotes: response?.misleading_quotes || {},
                 });
               }
             }
@@ -120,7 +127,7 @@ function App() {
 <div className="extension-container">
       {/* Header with logo and product info */}
       <header className="header">
-        <img src="logo.png" alt="Logo" className="logo" />
+        <img src={logo} alt="Logo" className="logo" />;
         <div className="product-info">
           <h1 className="product-name">TruthGuard</h1>
           <p className="product-description">
@@ -215,6 +222,25 @@ function App() {
               <p>{articleData.summary}</p>
             </div>
             <div className="result-section">
+              <h3>Misleading Quotes</h3>
+              {Object.keys(videoData.misleadingQuotes).length > 0 ? (
+                <ul>
+                  {(Object.entries(
+                    videoData.misleadingQuotes
+                  ) as [string, string][]).map(
+                    ([timestamp, explanation], index) => (
+                      <li key={index}>
+                        <strong>{timestamp}</strong>: {explanation}
+                      </li>
+                    )
+                  )}
+                </ul>
+              ) : (
+                <p>(No misleading quotes identified)</p>
+              )}
+            </div>
+            <div className="result-section">
+              
               <h3>Citations</h3>
               {articleData.citations.length > 0 ? (
                 <div className="citation-cards">

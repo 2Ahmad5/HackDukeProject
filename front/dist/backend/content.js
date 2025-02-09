@@ -31,7 +31,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
     } else if (message.action === "input_text"){
         let text = message.text;
-
+        console.log(text)
         if(text){
             (async () => {
                 await getPersonalText(text, sendResponse);
@@ -50,8 +50,9 @@ function extractVideoId(url) {
 }
 
 async function getPersonalText(text, sendResponse) {
+    console.log(text)
     try {
-        let response = await fetch('http://127.0.0.1:5000/check_manual_text', {
+        let response = await fetch('http://127.0.0.1:5000/check_manual', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -64,13 +65,17 @@ async function getPersonalText(text, sendResponse) {
         let data = await response.json();
         console.log("Reliability Check Result:", data);
 
-        let summary = data.result.summary;
+        let summary = data.result.content;
         let citations = data.result.citations;
+
+        sendResponse({
+            summary: summary,
+            citations: citations
+        });
 
     } catch(error){
         console.error("Error:", error);
         sendResponse({
-            classification: "Unknown",
             summary: "Error fetching summary.",
             citations: []
         });
@@ -105,6 +110,7 @@ async function summarizeText(text, sendResponse){
         sendResponse({
             classification: classification,
             summary: summary,
+            misleading_quotes: data.result.misleading_quotes,
             citations: citations
         });
 
@@ -166,7 +172,7 @@ function highlightText(targetText, explanation) {
             let span = document.createElement("span");
             span.style.backgroundColor = "yellow";
             span.style.fontWeight = "bold";
-            span.style.position = "relative"; // Needed for tooltip positioning
+            span.style.position = "relative";
             span.textContent = targetText;
 
             // Create tooltip box
@@ -182,7 +188,7 @@ function highlightText(targetText, explanation) {
             tooltip.style.borderRadius = "4px";
             tooltip.style.fontSize = "12px";
             tooltip.style.whiteSpace = "normal";      // Allow wrapping of text
-            tooltip.style.maxWidth = "250px";           // Limit tooltip width
+            tooltip.style.width = "250px";           // Limit tooltip width
             tooltip.style.overflowWrap = "break-word";   // Break long words if needed
             tooltip.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.2)";
             tooltip.style.zIndex = "1000";        

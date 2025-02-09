@@ -99,6 +99,41 @@ def check_video_reliability(context):
     except (requests.exceptions.JSONDecodeError, json.JSONDecodeError) as e:
         print("JSON Decode Error:", e)  # Debugging
         return {"error": "Invalid JSON response"}
+    
+def check_manual_text(context):
+    payload = {
+        "model": "sonar",
+        "messages": [
+            {
+                "role": "system",
+                "content": 
+                    "You are a helpful assistant designed to answer the prompt inputted to you with a complete degree of accuracy."
+                
+            },
+            {
+                "role": "user",
+                "content": f"Analyze the reliability of this article and structure your response as instructed: {context}"
+            }
+        ],
+        "return_citations": True
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    
+    # Debugging information
+    print("Status Code:", response.status_code)
+    
+    try:
+        response_json = response.json()
+        content = response_json['choices'][0]['message']['content']
+        citations = response_json.get('citations', [])
+        
+        print("Content:", content)
+        print("Citations:", citations)
+        
+        return {"content": content, "citations": citations} 
+    except requests.exceptions.JSONDecodeError:
+        return {"error": "Invalid JSON response"}
 
 def check_article_reliability(context):
     # Request payload
@@ -184,6 +219,20 @@ def process_article():
 
     article_url = data['url']
     result = check_article_reliability(article_url)
+
+    print(result)
+   
+    return jsonify({"result": result})
+
+@app.route('/check_manual', methods=['POST'])
+def check_manual():
+    data = request.json
+    print(data)
+    if 'url' not in data:
+        return jsonify({"error": "Missing 'url' field"}), 400
+
+    article_url = data['url']
+    result = check_manual_text(article_url)
 
     print(result)
    
